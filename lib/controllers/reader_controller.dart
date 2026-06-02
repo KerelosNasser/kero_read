@@ -17,6 +17,9 @@ class ReaderController extends GetxController {
   late PdfTextSearcher textSearcher;
   late TextEditingController searchTextController;
 
+  sync_pdf.PdfDocument? _cachedSyncDoc;
+  Future<void>? _initSyncDocFuture;
+
   // Search Observables
   var isSearchActive = false.obs;
   var currentMatchIndex = 0.obs;
@@ -111,13 +114,36 @@ class ReaderController extends GetxController {
     }
   }
 
+  Future<sync_pdf.PdfDocument?> _getOrInitSyncDoc() async {
+    if (_cachedSyncDoc != null) return _cachedSyncDoc;
+
+    _initSyncDocFuture ??= () async {
+      try {
+        final file = File(currentPdf.path);
+        if (await file.exists()) {
+          final bytes = await file.readAsBytes();
+          _cachedSyncDoc = sync_pdf.PdfDocument(inputBytes: bytes);
+        }
+      } catch (e) {
+        debugPrint("Error initializing sync PDF document: $e");
+        _initSyncDocFuture = null; // Allow retry on failure
+      }
+    }();
+
+    await _initSyncDocFuture;
+    return _cachedSyncDoc;
+  }
+
   Future<void> extractTextForAi(int pageNumber) async {
     try {
-      final bytes = await File(currentPdf.path).readAsBytes();
-      final doc = sync_pdf.PdfDocument(inputBytes: bytes);
-      String text = sync_pdf.PdfTextExtractor(doc).extractText(startPageIndex: pageNumber - 1, endPageIndex: pageNumber - 1);
-      Get.find<AiController>().setPageContext(text);
-      doc.dispose();
+      final doc = await _getOrInitSyncDoc();
+      if (doc != null) {
+        String text = sync_pdf.PdfTextExtractor(doc).extractText(
+          startPageIndex: pageNumber - 1,
+          endPageIndex: pageNumber - 1,
+        );
+        Get.find<AiController>().setPageContext(text);
+      }
     } catch (e) {
       debugPrint("Error extracting text: $e");
     }
@@ -131,6 +157,7 @@ class ReaderController extends GetxController {
     ]);
     textSearcher.dispose();
     searchTextController.dispose();
+    _cachedSyncDoc?.dispose();
     super.onClose();
   }
 }

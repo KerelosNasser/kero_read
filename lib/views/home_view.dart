@@ -4,6 +4,7 @@ import '../controllers/home_controller.dart';
 import '../models/folder_model.dart';
 import '../models/pdf_model.dart';
 import 'reader_view.dart';
+import 'widgets/generative_placeholder.dart';
 
 class HomeView extends GetView<HomeController> {
   HomeView({super.key}) {
@@ -32,7 +33,10 @@ class HomeView extends GetView<HomeController> {
         ];
 
         if (items.isEmpty) {
-          return const Center(child: Text("No items here. Tap + to add."));
+          return const GenerativePlaceholder(
+            title: "No Books or Folders Found",
+            subtitle: "Import a PDF file or create a folder to begin reading.",
+          );
         }
 
         return GridView.builder(

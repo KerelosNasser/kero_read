@@ -26,6 +26,8 @@ class AiController extends GetxController {
   }
 
   Future<void> askQuestion() async {
+    if (isLoading.value) return;
+    
     String question = chatTextController.text;
     if (question.trim().isEmpty) return;
     
@@ -33,9 +35,11 @@ class AiController extends GetxController {
     messages.add({'role': 'user', 'content': question});
     isLoading.value = true;
     
-    String response = await _aiService.askQuestion(question);
-    
-    messages.add({'role': 'ai', 'content': response});
-    isLoading.value = false;
+    try {
+      String response = await _aiService.askQuestion(question);
+      messages.add({'role': 'ai', 'content': response});
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

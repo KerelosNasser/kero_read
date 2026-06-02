@@ -19,6 +19,9 @@ class HomeController extends GetxController {
   var pdfs = <PdfModel>[].obs;
   var currentFolderId = ''.obs;
 
+  // In-memory index grouping PDFs by folder for O(1) reads
+  final Map<String, List<PdfModel>> _pdfsByFolder = {};
+
   @override
   void onInit() {
     super.onInit();
@@ -63,7 +66,10 @@ class HomeController extends GetxController {
     );
 
     await _storage.pdfBox.put(pdf.id, pdf);
-    loadData();
+    
+    // Incremental index update
+    _pdfsByFolder.putIfAbsent(pdf.folderId, () => []).add(pdf);
+    _updatePdfsList();
 
     // Navigate immediately
     Get.to(() => ReaderView(pdf: pdf));
@@ -82,25 +88,26 @@ class HomeController extends GetxController {
 
   void loadData() {
     folders.value = _storage.folderBox.values.toList();
-    if (currentFolderId.isEmpty) {
-      pdfs.value = _storage.pdfBox.values
-          .where((p) => p.folderId.isEmpty)
-          .toList();
-    } else {
-      pdfs.value = _storage.pdfBox.values
-          .where((p) => p.folderId == currentFolderId.value)
-          .toList();
+    
+    _pdfsByFolder.clear();
+    for (var pdf in _storage.pdfBox.values) {
+      _pdfsByFolder.putIfAbsent(pdf.folderId, () => []).add(pdf);
     }
+    _updatePdfsList();
+  }
+
+  void _updatePdfsList() {
+    pdfs.value = List<PdfModel>.from(_pdfsByFolder[currentFolderId.value] ?? []);
   }
 
   void openFolder(String folderId) {
     currentFolderId.value = folderId;
-    loadData();
+    _updatePdfsList();
   }
 
   void goBack() {
     currentFolderId.value = '';
-    loadData();
+    _updatePdfsList();
   }
 
   Future<void> createFolder() async {
@@ -114,7 +121,7 @@ class HomeController extends GetxController {
     );
     await _storage.folderBox.put(folder.id, folder);
     folderNameController.clear();
-    loadData();
+    folders.add(folder);
   }
 
   Future<void> importPdf() async {
@@ -136,24 +143,30 @@ class HomeController extends GetxController {
       );
 
       await _storage.pdfBox.put(pdf.id, pdf);
-      loadData();
+      
+      _pdfsByFolder.putIfAbsent(pdf.folderId, () => []).add(pdf);
+      _updatePdfsList();
     }
   }
 
   Future<void> deletePdf(String id) async {
-    await _storage.pdfBox.delete(id);
-    loadData();
+    final pdf = _storage.pdfBox.get(id);
+    if (pdf != null) {
+      await _storage.pdfBox.delete(id);
+      _pdfsByFolder[pdf.folderId]?.removeWhere((p) => p.id == id);
+      _updatePdfsList();
+    }
   }
 
   Future<void> deleteFolder(String id) async {
-    var toDelete = _storage.pdfBox.values
-        .where((p) => p.folderId == id)
-        .map((p) => p.id)
-        .toList();
-    for (var pdfId in toDelete) {
-      await _storage.pdfBox.delete(pdfId);
-    }
+    final toDelete = _pdfsByFolder[id] ?? [];
+    final idsToDelete = toDelete.map((p) => p.id).toList();
+    
+    await _storage.pdfBox.deleteAll(idsToDelete);
     await _storage.folderBox.delete(id);
-    loadData();
+    
+    _pdfsByFolder.remove(id);
+    folders.removeWhere((f) => f.id == id);
+    _updatePdfsList();
   }
 }

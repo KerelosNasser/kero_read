@@ -199,20 +199,23 @@ class ReaderView extends GetView<ReaderController> {
                 )),
               ),
               Obx(() => aiController.isLoading.value ? const CircularProgressIndicator() : const SizedBox.shrink()),
-              Row(
+              Obx(() => Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: aiController.chatTextController,
+                      enabled: !aiController.isLoading.value,
                       decoration: const InputDecoration(hintText: "Type a question..."),
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.send),
-                    onPressed: () => aiController.askQuestion(),
+                    onPressed: aiController.isLoading.value
+                        ? null
+                        : () => aiController.askQuestion(),
                   )
                 ],
-              ),
+              )),
               const SizedBox(height: 16),
             ],
           ),
