@@ -9,9 +9,9 @@ import 'views/home_view.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  
+
   await initServices();
-  
+
   runApp(const MyApp());
 }
 
@@ -27,6 +27,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Kero Read',
       theme: ThemeData(
         brightness: Brightness.dark,
