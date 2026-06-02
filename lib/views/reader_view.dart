@@ -5,19 +5,38 @@ import '../models/pdf_model.dart';
 import '../controllers/reader_controller.dart';
 import '../controllers/ai_controller.dart';
 
-class ReaderView extends GetView<ReaderController> {
+class ReaderView extends StatefulWidget {
   final PdfModel pdf;
   
-  ReaderView({super.key, required this.pdf}) {
-    Get.put(ReaderController()).setPdf(pdf);
+  const ReaderView({super.key, required this.pdf});
+
+  @override
+  State<ReaderView> createState() => _ReaderViewState();
+}
+
+class _ReaderViewState extends State<ReaderView> {
+  late final ReaderController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(ReaderController());
+    controller.setPdf(widget.pdf);
     Get.put(AiController());
+  }
+
+  @override
+  void dispose() {
+    Get.delete<ReaderController>();
+    Get.delete<AiController>();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(pdf.name, overflow: TextOverflow.ellipsis),
+        title: Text(widget.pdf.name, overflow: TextOverflow.ellipsis),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -42,33 +61,41 @@ class ReaderView extends GetView<ReaderController> {
       body: Stack(
         children: [
           Obx(() {
-            return ColorFiltered(
-              colorFilter: controller.isDarkMode.value
-                  ? const ColorFilter.matrix([
-                      -1,  0,  0, 0, 255,
-                       0, -1,  0, 0, 255,
-                       0,  0, -1, 0, 255,
-                       0,  0,  0, 1,   0,
-                    ])
-                  : const ColorFilter.mode(Colors.white, BlendMode.dst),
-              child: PdfViewer.file(
-                pdf.path,
-                controller: controller.pdfController,
-                initialPageNumber: pdf.lastReadPage,
-                params: PdfViewerParams(
-                  // High performance O(V) native canvas highlighting
-                  pagePaintCallbacks: [
-                    controller.textSearcher.pageTextMatchPaintCallback
-                  ],
-                  onPageChanged: (page) {
-                    if (page != null) {
-                      controller.updateLastReadPage(page);
-                      controller.extractTextForAi(page);
-                    }
-                  },
-                ),
+            final pdfViewer = PdfViewer.file(
+              widget.pdf.path,
+              controller: controller.pdfController,
+              initialPageNumber: widget.pdf.lastReadPage,
+              params: PdfViewerParams(
+                // High performance O(V) native canvas highlighting
+                pagePaintCallbacks: [
+                  if (controller.textSearcher.value != null)
+                    controller.textSearcher.value!.pageTextMatchPaintCallback
+                ],
+                onPageChanged: (page) {
+                  if (page != null) {
+                    controller.updateLastReadPage(page);
+                    controller.extractTextForAi(page);
+                  }
+                },
+                onViewerReady: (document, pdfController) {
+                  controller.initTextSearcher();
+                },
               ),
             );
+
+            if (controller.isDarkMode.value) {
+              return ColorFiltered(
+                colorFilter: const ColorFilter.matrix([
+                  -1,  0,  0, 0, 255,
+                   0, -1,  0, 0, 255,
+                   0,  0, -1, 0, 255,
+                   0,  0,  0, 1,   0,
+                ]),
+                child: pdfViewer,
+              );
+            } else {
+              return pdfViewer;
+            }
           }),
           
           // VS Code style Search Bar Overlay

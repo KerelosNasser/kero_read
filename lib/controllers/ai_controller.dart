@@ -13,6 +13,7 @@ class AiController extends GetxController {
   void onInit() {
     super.onInit();
     chatTextController = TextEditingController();
+    _aiService.resetChat();
   }
 
   @override

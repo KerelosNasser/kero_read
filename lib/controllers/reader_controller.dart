@@ -14,7 +14,7 @@ class ReaderController extends GetxController {
   
   late PdfModel currentPdf;
   late PdfViewerController pdfController;
-  late PdfTextSearcher textSearcher;
+  final textSearcher = Rxn<PdfTextSearcher>();
   late TextEditingController searchTextController;
 
   sync_pdf.PdfDocument? _cachedSyncDoc;
@@ -30,15 +30,18 @@ class ReaderController extends GetxController {
   void onInit() {
     super.onInit();
     pdfController = PdfViewerController();
-    textSearcher = PdfTextSearcher(pdfController);
     searchTextController = TextEditingController();
+  }
 
-    // Listen to the text searcher to update reactive states
-    textSearcher.addListener(() {
-      isSearching.value = textSearcher.isSearching;
-      totalMatches.value = textSearcher.matches.length;
-      currentMatchIndex.value = (textSearcher.currentIndex ?? -1) + 1; // 1-indexed for display
+  void initTextSearcher() {
+    if (textSearcher.value != null) return;
+    final searcher = PdfTextSearcher(pdfController);
+    searcher.addListener(() {
+      isSearching.value = searcher.isSearching;
+      totalMatches.value = searcher.matches.length;
+      currentMatchIndex.value = (searcher.currentIndex ?? -1) + 1; // 1-indexed for display
     });
+    textSearcher.value = searcher;
   }
 
   void toggleSearchBar() {
@@ -50,28 +53,28 @@ class ReaderController extends GetxController {
 
   void startSearch(String query) {
     if (query.isEmpty) {
-      textSearcher.resetTextSearch();
+      textSearcher.value?.resetTextSearch();
       return;
     }
     // High performance search utilizing pdfrx caching
-    textSearcher.startTextSearch(query, caseInsensitive: true, goToFirstMatch: true);
+    textSearcher.value?.startTextSearch(query, caseInsensitive: true, goToFirstMatch: true);
   }
 
   void nextMatch() {
-    if (textSearcher.hasMatches) {
-      textSearcher.goToNextMatch();
+    if (textSearcher.value != null && textSearcher.value!.hasMatches) {
+      textSearcher.value!.goToNextMatch();
     }
   }
 
   void prevMatch() {
-    if (textSearcher.hasMatches) {
-      textSearcher.goToPrevMatch();
+    if (textSearcher.value != null && textSearcher.value!.hasMatches) {
+      textSearcher.value!.goToPrevMatch();
     }
   }
 
   void clearSearch() {
     searchTextController.clear();
-    textSearcher.resetTextSearch();
+    textSearcher.value?.resetTextSearch();
   }
 
   void setPdf(PdfModel pdf) {
@@ -155,7 +158,7 @@ class ReaderController extends GetxController {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    textSearcher.dispose();
+    textSearcher.value?.dispose();
     searchTextController.dispose();
     _cachedSyncDoc?.dispose();
     super.onClose();

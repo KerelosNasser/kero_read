@@ -17,6 +17,11 @@ class AiService extends GetxService {
     return this;
   }
 
+  void resetChat() {
+    _chat = _model.startChat();
+    _currentPageContext = '';
+  }
+
   void updateContext(String text) {
     _currentPageContext = text;
   }
