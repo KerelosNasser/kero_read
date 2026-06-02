@@ -53,41 +53,42 @@ class _ReaderViewState extends State<ReaderView> {
                   behavior: HitTestBehavior.translucent,
                   onTap: controller.toggleAppBarVisibility,
                   child: Obx(() {
-                    final pdfViewer = PdfViewer.file(
-                      widget.pdf.path,
-                      controller: controller.pdfController,
-                      initialPageNumber: widget.pdf.lastReadPage,
-                      params: PdfViewerParams(
-                        // High performance O(V) native canvas highlighting
-                        pagePaintCallbacks: [
-                          if (controller.textSearcher.value != null)
-                            controller.textSearcher.value!.pageTextMatchPaintCallback
-                        ],
-                        onPageChanged: (page) {
-                          if (page != null) {
-                            controller.updateLastReadPage(page);
-                            controller.extractTextForAi(page);
-                          }
-                        },
-                        onViewerReady: (document, pdfController) {
-                          controller.initTextSearcher();
-                        },
+                    return ColorFiltered(
+                      colorFilter: controller.isDarkMode.value
+                          ? const ColorFilter.matrix([
+                              -1,  0,  0, 0, 255,
+                               0, -1,  0, 0, 255,
+                               0,  0, -1, 0, 255,
+                               0,  0,  0, 1,   0,
+                            ])
+                          : const ColorFilter.matrix([
+                              1, 0, 0, 0, 0,
+                              0, 1, 0, 0, 0,
+                              0, 0, 1, 0, 0,
+                              0, 0, 0, 1, 0,
+                            ]),
+                      child: PdfViewer.file(
+                        widget.pdf.path,
+                        controller: controller.pdfController,
+                        initialPageNumber: widget.pdf.lastReadPage,
+                        params: PdfViewerParams(
+                          // High performance O(V) native canvas highlighting
+                          pagePaintCallbacks: [
+                            if (controller.textSearcher.value != null)
+                              controller.textSearcher.value!.pageTextMatchPaintCallback
+                          ],
+                          onPageChanged: (page) {
+                            if (page != null) {
+                              controller.updateLastReadPage(page);
+                              controller.extractTextForAi(page);
+                            }
+                          },
+                          onViewerReady: (document, pdfController) {
+                            controller.initTextSearcher();
+                          },
+                        ),
                       ),
                     );
-
-                    if (controller.isDarkMode.value) {
-                      return ColorFiltered(
-                        colorFilter: const ColorFilter.matrix([
-                          -1,  0,  0, 0, 255,
-                           0, -1,  0, 0, 255,
-                           0,  0, -1, 0, 255,
-                           0,  0,  0, 1,   0,
-                        ]),
-                        child: pdfViewer,
-                      );
-                    } else {
-                      return pdfViewer;
-                    }
                   }),
                 ),
               ),
@@ -307,64 +308,119 @@ class _ReaderViewState extends State<ReaderView> {
                     child: Obx(() {
                       if (aiController.messages.isEmpty) {
                         return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[600]),
-                              const SizedBox(height: 12),
-                              Text(
-                                "Ask anything about this page",
-                                style: TextStyle(color: Colors.grey[500], fontSize: 15),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                "Supports equations, tables, and general concepts.",
-                                style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[600]),
+                                const SizedBox(height: 12),
+                                Text(
+                                  "Ask anything about this page",
+                                  style: TextStyle(color: Colors.grey[500], fontSize: 15),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  "Supports equations, tables, and general concepts.",
+                                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 24),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  alignment: WrapAlignment.center,
+                                  children: aiController.suggestionChips.map((chipText) {
+                                    return ActionChip(
+                                      label: Text(
+                                        chipText,
+                                        style: const TextStyle(fontSize: 12, color: Colors.tealAccent),
+                                      ),
+                                      backgroundColor: Colors.teal.withValues(alpha: 0.15),
+                                      side: const BorderSide(color: Colors.tealAccent, width: 0.5),
+                                      onPressed: () => aiController.askPresetQuestion(chipText),
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       }
                       
                       return ListView.builder(
+                        controller: aiController.scrollController,
                         itemCount: aiController.messages.length,
                         itemBuilder: (context, index) {
                           final msg = aiController.messages[index];
                           bool isUser = msg['role'] == 'user';
-                          return Align(
-                            alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(vertical: 6),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              constraints: BoxConstraints(
-                                maxWidth: MediaQuery.of(context).size.width * 0.75,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isUser 
-                                    ? Colors.teal[800]!.withValues(alpha: 0.8) 
-                                    : Colors.grey[900]!.withValues(alpha: 0.8),
-                                borderRadius: BorderRadius.only(
-                                  topLeft: const Radius.circular(12),
-                                  topRight: const Radius.circular(12),
-                                  bottomLeft: Radius.circular(isUser ? 12 : 0),
-                                  bottomRight: Radius.circular(isUser ? 0 : 12),
-                                ),
-                                border: Border.all(
-                                  color: isUser 
-                                      ? Colors.tealAccent.withValues(alpha: 0.2) 
-                                      : Colors.white12,
-                                ),
-                              ),
-                              child: isUser
-                                  ? Text(
-                                      msg['content'] ?? '',
-                                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                                    )
-                                  : GptMarkdown(
-                                      msg['content'] ?? '',
-                                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6.0),
+                            child: Row(
+                              mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (!isUser) ...[
+                                  Container(
+                                    margin: const EdgeInsets.only(right: 8, top: 4),
+                                    width: 28,
+                                    height: 28,
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                        colors: [Colors.tealAccent, Colors.teal],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
                                     ),
+                                    child: const Icon(Icons.auto_awesome, size: 14, color: Colors.black),
+                                  ),
+                                ],
+                                Flexible(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                    constraints: BoxConstraints(
+                                      maxWidth: MediaQuery.of(context).size.width * (isUser ? 0.75 : 0.85),
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isUser 
+                                          ? Colors.teal[800]!.withValues(alpha: 0.8) 
+                                          : Colors.grey[900]!.withValues(alpha: 0.8),
+                                      borderRadius: BorderRadius.only(
+                                        topLeft: const Radius.circular(12),
+                                        topRight: const Radius.circular(12),
+                                        bottomLeft: Radius.circular(isUser ? 12 : 0),
+                                        bottomRight: Radius.circular(isUser ? 0 : 12),
+                                      ),
+                                      border: Border.all(
+                                        color: isUser 
+                                            ? Colors.tealAccent.withValues(alpha: 0.2) 
+                                            : Colors.white12,
+                                      ),
+                                    ),
+                                    child: isUser
+                                        ? Text(
+                                            msg['content'] ?? '',
+                                            style: const TextStyle(color: Colors.white, fontSize: 14),
+                                          )
+                                        : GptMarkdown(
+                                            msg['content'] ?? '',
+                                            style: const TextStyle(color: Colors.white, fontSize: 14),
+                                          ),
+                                  ),
+                                ),
+                                if (isUser) ...[
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 8, top: 4),
+                                    width: 28,
+                                    height: 28,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.grey[800],
+                                    ),
+                                    child: const Icon(Icons.person, size: 14, color: Colors.white),
+                                  ),
+                                ],
+                              ],
                             ),
                           );
                         },
@@ -403,25 +459,32 @@ class _ReaderViewState extends State<ReaderView> {
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Expanded(
                           child: TextField(
                             controller: aiController.chatTextController,
                             enabled: !aiController.isLoading.value,
                             style: const TextStyle(fontSize: 14, color: Colors.white),
+                            minLines: 1,
+                            maxLines: 4,
+                            keyboardType: TextInputType.multiline,
                             decoration: const InputDecoration(
                               hintText: "Ask about this page...",
                               hintStyle: TextStyle(color: Colors.white38),
                               border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(vertical: 10),
                             ),
-                            onSubmitted: (_) => aiController.isLoading.value ? null : aiController.askQuestion(),
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.send, color: Colors.tealAccent),
-                          onPressed: aiController.isLoading.value
-                              ? null
-                              : () => aiController.askQuestion(),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 2.0),
+                          child: IconButton(
+                            icon: const Icon(Icons.send, color: Colors.tealAccent),
+                            onPressed: aiController.isLoading.value
+                                ? null
+                                : () => aiController.askQuestion(),
+                          ),
                         )
                       ],
                     ),

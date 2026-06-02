@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -36,6 +35,15 @@ class ReaderController extends GetxController {
     super.onInit();
     pdfController = PdfViewerController();
     searchTextController = TextEditingController();
+
+    // Dynamically toggle full screen focus mode
+    ever(isAppBarVisible, (bool visible) {
+      if (visible) {
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
+      } else {
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      }
+    });
   }
 
   void initTextSearcher() {
@@ -177,7 +185,6 @@ class ReaderController extends GetxController {
   Future<Uint8List?> renderCurrentPageAsImage() async {
     try {
       final document = pdfController.document;
-      if (document == null) return null;
       final pageNumber = pdfController.pageNumber;
       if (pageNumber == null) return null;
 
@@ -206,6 +213,7 @@ class ReaderController extends GetxController {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
     textSearcher.value?.dispose();
     searchTextController.dispose();
     _cachedSyncDoc?.dispose();

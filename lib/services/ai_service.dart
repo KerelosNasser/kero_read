@@ -30,13 +30,13 @@ class AiService extends GetxService {
   Future<String> askQuestion(String question, {Uint8List? imageBytes}) async {
     try {
       final String systemPrompt =
-          "You are an expert tutor ready to explain anything (math, science, stats, literature, etc.).\n"
-          "Examine the provided PDF page content/image and answer the user's question.\n"
+          "You are an expert tutor. Answer the question based on the PDF text/image.\n"
           "Guidelines:\n"
-          "1. Explain simply and break down complex concepts/equations step-by-step.\n"
-          "2. Render math equations/formulas using standard LaTeX (\$...\$ for inline, \$\$...\$\$ for block).\n"
-          "3. Render tables using standard markdown table formatting.\n"
-          "4. Be highly structured, clear, and concise. Avoid wordy filler to minimize tokens.";
+          "1. NO filler, NO intro/outro (e.g. 'Sure!', 'Here is the explanation', 'Let me know...'). Start directly with the answer/explanation.\n"
+          "2. Minimize tokens: Be extremely brief, concise, and structured. Use short bullet points.\n"
+          "3. Render math equations using standard LaTeX (\$...\$ for inline, \$\$...\$\$ for block).\n"
+          "4. Render tables using standard markdown.\n"
+          "5. Break down complex formulas/concepts step-by-step simply.";
 
       final promptText = "$systemPrompt\n\n"
           "Text context from page: $_currentPageContext\n\n"
