@@ -42,9 +42,9 @@ class HomeView extends GetView<HomeController> {
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
+            crossAxisCount: 3,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
             childAspectRatio: 0.8,
           ),
           itemCount: items.length,
@@ -88,7 +88,7 @@ class HomeView extends GetView<HomeController> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.folder, size: 64, color: Colors.amber),
+            const Icon(Icons.folder, size: 48, color: Colors.amber),
             const SizedBox(height: 8),
             Text(folder.name, style: const TextStyle(fontWeight: FontWeight.bold)),
           ],
@@ -118,7 +118,7 @@ class HomeView extends GetView<HomeController> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.picture_as_pdf, size: 64, color: Colors.redAccent),
+            const Icon(Icons.picture_as_pdf, size: 48, color: Colors.redAccent),
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
