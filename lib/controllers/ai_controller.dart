@@ -1,6 +1,8 @@
+import 'dart:typed_data';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../services/ai_service.dart';
+import 'reader_controller.dart';
 
 class AiController extends GetxController {
   final AiService _aiService = Get.find<AiService>();
@@ -37,7 +39,15 @@ class AiController extends GetxController {
     isLoading.value = true;
     
     try {
-      String response = await _aiService.askQuestion(question);
+      Uint8List? imageBytes;
+      try {
+        final readerController = Get.find<ReaderController>();
+        imageBytes = await readerController.renderCurrentPageAsImage();
+      } catch (e) {
+        debugPrint("Could not render page image: $e");
+      }
+      
+      String response = await _aiService.askQuestion(question, imageBytes: imageBytes);
       messages.add({'role': 'ai', 'content': response});
     } finally {
       isLoading.value = false;

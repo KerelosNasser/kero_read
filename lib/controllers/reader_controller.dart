@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
@@ -19,6 +21,9 @@ class ReaderController extends GetxController {
 
   sync_pdf.PdfDocument? _cachedSyncDoc;
   Future<void>? _initSyncDocFuture;
+
+  // UI visibility state
+  var isAppBarVisible = true.obs;
 
   // Search Observables
   var isSearchActive = false.obs;
@@ -149,6 +154,49 @@ class ReaderController extends GetxController {
       }
     } catch (e) {
       debugPrint("Error extracting text: $e");
+    }
+  }
+
+  void toggleAppBarVisibility() {
+    isAppBarVisible.value = !isAppBarVisible.value;
+  }
+
+  void onScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollUpdateNotification) {
+      final delta = notification.scrollDelta;
+      if (delta != null && delta.abs() > 2) {
+        if (delta > 0 && isAppBarVisible.value) {
+          isAppBarVisible.value = false;
+        } else if (delta < 0 && !isAppBarVisible.value) {
+          isAppBarVisible.value = true;
+        }
+      }
+    }
+  }
+
+  Future<Uint8List?> renderCurrentPageAsImage() async {
+    try {
+      final document = pdfController.document;
+      if (document == null) return null;
+      final pageNumber = pdfController.pageNumber;
+      if (pageNumber == null) return null;
+
+      final page = document.pages[pageNumber - 1];
+      final pageImage = await page.render(
+        width: (page.width * 1.5).toInt(),
+        height: (page.height * 1.5).toInt(),
+      );
+      if (pageImage == null) return null;
+
+      final ui.Image uiImage = await pageImage.createImage();
+      final byteData = await uiImage.toByteData(format: ui.ImageByteFormat.png);
+      pageImage.dispose();
+
+      if (byteData == null) return null;
+      return byteData.buffer.asUint8List();
+    } catch (e) {
+      debugPrint("Error rendering current page: $e");
+      return null;
     }
   }
 
