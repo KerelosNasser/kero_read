@@ -37,170 +37,175 @@ class _ReaderViewState extends State<ReaderView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Obx(() {
-        final bool isAppBarVisible = controller.isAppBarVisible.value;
+      body: Stack(
+        children: [
+          // 1. PDF Viewer with scroll listener & tap toggle
+          Positioned.fill(
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                controller.onScrollNotification(notification);
+                return false;
+              },
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: controller.toggleAppBarVisibility,
+                child: Obx(() {
+                  final viewer = PdfViewer.file(
+                    widget.pdf.path,
+                    controller: controller.pdfController,
+                    initialPageNumber: widget.pdf.lastReadPage,
+                    params: PdfViewerParams(
+                      onGeneralTap: (context, pdfController, details) {
+                        controller.toggleAppBarVisibility();
+                        return false;
+                      },
+                      // High performance O(V) native canvas highlighting
+                      pagePaintCallbacks: [
+                        if (controller.textSearcher.value != null)
+                          controller.textSearcher.value!.pageTextMatchPaintCallback
+                      ],
+                      onPageChanged: (page) {
+                        if (page != null) {
+                          controller.updateLastReadPage(page);
+                          controller.extractTextForAi(page);
+                        }
+                      },
+                      onViewerReady: (document, pdfController) {
+                        controller.initTextSearcher();
+                      },
+                      errorBannerBuilder: (context, error, stackTrace, documentRef) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: Text(
+                              "Error loading PDF:\n$error",
+                              style: const TextStyle(color: Colors.redAccent, fontSize: 16),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
 
-        return Stack(
-          children: [
-            // 1. PDF Viewer with scroll listener & tap toggle
-            Positioned.fill(
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (notification) {
-                  controller.onScrollNotification(notification);
-                  return false;
-                },
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onTap: controller.toggleAppBarVisibility,
-                  child: Obx(() {
-                    return ColorFiltered(
-                      colorFilter: controller.isDarkMode.value
-                          ? const ColorFilter.matrix([
-                              -1,  0,  0, 0, 255,
-                               0, -1,  0, 0, 255,
-                               0,  0, -1, 0, 255,
-                               0,  0,  0, 1,   0,
-                            ])
-                          : const ColorFilter.matrix([
-                              1, 0, 0, 0, 0,
-                              0, 1, 0, 0, 0,
-                              0, 0, 1, 0, 0,
-                              0, 0, 0, 1, 0,
-                            ]),
-                      child: PdfViewer.file(
-                        widget.pdf.path,
-                        controller: controller.pdfController,
-                        initialPageNumber: widget.pdf.lastReadPage,
-                        params: PdfViewerParams(
-                          // High performance O(V) native canvas highlighting
-                          pagePaintCallbacks: [
-                            if (controller.textSearcher.value != null)
-                              controller.textSearcher.value!.pageTextMatchPaintCallback
-                          ],
-                          onPageChanged: (page) {
-                            if (page != null) {
-                              controller.updateLastReadPage(page);
-                              controller.extractTextForAi(page);
-                            }
-                          },
-                          onViewerReady: (document, pdfController) {
-                            controller.initTextSearcher();
-                          },
-                          errorBannerBuilder: (context, error, stackTrace, documentRef) {
-                            return Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(32.0),
-                                child: Text(
-                                  "Error loading PDF:\n$error",
-                                  style: const TextStyle(color: Colors.redAccent, fontSize: 16),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  }),
-                ),
+                  return ColorFiltered(
+                    colorFilter: controller.isDarkMode.value
+                        ? const ColorFilter.matrix([
+                            -1,  0,  0, 0, 255,
+                             0, -1,  0, 0, 255,
+                             0,  0, -1, 0, 255,
+                             0,  0,  0, 1,   0,
+                          ])
+                        : const ColorFilter.matrix([
+                             1,  0,  0, 0,   0,
+                             0,  1,  0, 0,   0,
+                             0,  0,  1, 0,   0,
+                             0,  0,  0, 1,   0,
+                          ]),
+                    child: viewer,
+                  );
+                }),
               ),
             ),
+          ),
 
-            // 2. Glassy Frosted AppBar overlay
-            AnimatedPositioned(
+          // 2. Glassy Frosted AppBar overlay
+          Obx(() {
+            final bool isAppBarVisible = controller.isAppBarVisible.value;
+            return AnimatedPositioned(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
               top: isAppBarVisible ? 0 : -kToolbarHeight - MediaQuery.of(context).padding.top,
               left: 0,
               right: 0,
               child: _buildGlassyAppBar(context),
-            ),
+            );
+          }),
 
-            // 3. VS Code style Search Bar Overlay
-            Obx(() {
-              if (!controller.isSearchActive.value) return const SizedBox.shrink();
-              final double topPadding = MediaQuery.of(context).padding.top;
-              return AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                top: controller.isAppBarVisible.value ? topPadding + kToolbarHeight + 8 : topPadding + 8,
-                right: 16,
-                child: Material(
-                  elevation: 4,
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(8),
-                    bottomRight: Radius.circular(8),
-                  ),
-                  color: Theme.of(context).colorScheme.surface,
-                  child: Container(
-                    width: 320,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: controller.searchTextController,
-                            autofocus: true,
-                            decoration: const InputDecoration(
-                              hintText: "Find",
-                              border: InputBorder.none,
-                              isDense: true,
-                            ),
-                            onChanged: controller.startSearch,
+          // 3. VS Code style Search Bar Overlay
+          Obx(() {
+            if (!controller.isSearchActive.value) return const SizedBox.shrink();
+            final double topPadding = MediaQuery.of(context).padding.top;
+            return AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              top: controller.isAppBarVisible.value ? topPadding + kToolbarHeight + 8 : topPadding + 8,
+              right: 16,
+              child: Material(
+                elevation: 4,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(8),
+                  bottomRight: Radius.circular(8),
+                ),
+                color: Theme.of(context).colorScheme.surface,
+                child: Container(
+                  width: 320,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: controller.searchTextController,
+                          autofocus: true,
+                          decoration: const InputDecoration(
+                            hintText: "Find",
+                            border: InputBorder.none,
+                            isDense: true,
                           ),
+                          onChanged: controller.startSearch,
                         ),
-                        // Match Counter
-                        Obx(() {
-                          if (controller.isSearching.value && controller.totalMatches.value == 0) {
-                            return const SizedBox(
-                              width: 14, height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            );
-                          }
-                          if (controller.searchTextController.text.isEmpty) {
-                            return const SizedBox.shrink();
-                          }
-                          return Text(
-                            '${controller.totalMatches.value > 0 ? controller.currentMatchIndex.value : 0} of ${controller.totalMatches.value}',
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      // Match Counter
+                      Obx(() {
+                        if (controller.isSearching.value && controller.totalMatches.value == 0) {
+                          return const SizedBox(
+                            width: 14, height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           );
-                        }),
-                        const SizedBox(width: 8),
-                        // Navigation & Close
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.keyboard_arrow_up, size: 20),
-                              onPressed: controller.prevMatch,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                            const SizedBox(width: 4),
-                            IconButton(
-                              icon: const Icon(Icons.keyboard_arrow_down, size: 20),
-                              onPressed: controller.nextMatch,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                            const SizedBox(width: 4),
-                            IconButton(
-                              icon: const Icon(Icons.close, size: 20),
-                              onPressed: controller.toggleSearchBar,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                        }
+                        if (controller.searchTextController.text.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return Text(
+                          '${controller.totalMatches.value > 0 ? controller.currentMatchIndex.value : 0} of ${controller.totalMatches.value}',
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        );
+                      }),
+                      const SizedBox(width: 8),
+                      // Navigation & Close
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.keyboard_arrow_up, size: 20),
+                            onPressed: controller.prevMatch,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: const Icon(Icons.keyboard_arrow_down, size: 20),
+                            onPressed: controller.nextMatch,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 20),
+                            onPressed: controller.toggleSearchBar,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              );
-            }),
-          ],
-        );
-      }),
+              ),
+            );
+          }),
+        ],
+      ),
       floatingActionButton: Obx(() => AnimatedSlide(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -219,41 +224,36 @@ class _ReaderViewState extends State<ReaderView> {
 
   Widget _buildGlassyAppBar(BuildContext context) {
     final double topPadding = MediaQuery.of(context).padding.top;
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: EdgeInsets.only(top: topPadding),
-          color: Colors.black.withValues(alpha: 0.35),
-          child: SizedBox(
-            height: kToolbarHeight,
-            child: AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              title: Text(widget.pdf.name, overflow: TextOverflow.ellipsis),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  tooltip: "Search Text",
-                  onPressed: () => controller.toggleSearchBar(),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.document_scanner),
-                  tooltip: "Scan PDF with OCR",
-                  onPressed: () => controller.performOcr(),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.screen_rotation),
-                  onPressed: controller.toggleOrientation,
-                ),
-                Obx(() => IconButton(
-                  icon: Icon(controller.isDarkMode.value ? Icons.light_mode : Icons.dark_mode),
-                  onPressed: controller.toggleDarkMode,
-                )),
-              ],
+    return Container(
+      padding: EdgeInsets.only(top: topPadding),
+      color: const Color(0xFF1E1E1E),
+      child: SizedBox(
+        height: kToolbarHeight,
+        child: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          title: Text(widget.pdf.name, overflow: TextOverflow.ellipsis),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              tooltip: "Search Text",
+              onPressed: () => controller.toggleSearchBar(),
             ),
-          ),
+            IconButton(
+              icon: const Icon(Icons.document_scanner),
+              tooltip: "Scan PDF with OCR",
+              onPressed: () => controller.performOcr(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.screen_rotation),
+              onPressed: controller.toggleOrientation,
+            ),
+            Obx(() => IconButton(
+              icon: Icon(controller.isDarkMode.value ? Icons.light_mode : Icons.dark_mode),
+              onPressed: controller.toggleDarkMode,
+            )),
+          ],
         ),
       ),
     );

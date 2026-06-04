@@ -10,7 +10,7 @@ import '../services/ocr_service.dart';
 import '../controllers/ai_controller.dart';
 
 class ReaderController extends GetxController {
-  var isDarkMode = true.obs;
+  var isDarkMode = false.obs;
   var isLandscape = false.obs;
   
   late PdfModel currentPdf;
@@ -23,6 +23,7 @@ class ReaderController extends GetxController {
 
   // UI visibility state
   var isAppBarVisible = true.obs;
+  bool _isInitialLoad = true;
 
   // Search Observables
   var isSearchActive = false.obs;
@@ -43,6 +44,11 @@ class ReaderController extends GetxController {
       } else {
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       }
+    });
+
+    // Reset initial load status after rendering stabilises
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      _isInitialLoad = false;
     });
   }
 
@@ -170,6 +176,7 @@ class ReaderController extends GetxController {
   }
 
   void onScrollNotification(ScrollNotification notification) {
+    if (_isInitialLoad) return;
     if (notification is ScrollUpdateNotification) {
       final delta = notification.scrollDelta;
       if (delta != null && delta.abs() > 2) {
