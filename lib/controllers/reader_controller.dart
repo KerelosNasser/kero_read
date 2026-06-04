@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -179,19 +180,30 @@ class ReaderController extends GetxController {
 
   void onScrollNotification(ScrollNotification notification) {
     if (_isInitialLoad) {
-      debugPrint("onScrollNotification: ignored due to initial load");
       return;
     }
+
+    // Touch drag scroll handling
+    if (notification is UserScrollNotification) {
+      if (notification.direction == ScrollDirection.reverse && isAppBarVisible.value) {
+        isAppBarVisible.value = false;
+        debugPrint("onScrollNotification (user): hiding AppBar (focus mode)");
+      } else if (notification.direction == ScrollDirection.forward && !isAppBarVisible.value) {
+        isAppBarVisible.value = true;
+        debugPrint("onScrollNotification (user): showing AppBar");
+      }
+    }
+
+    // Desktop/Windows mouse wheel or trackpad scroll handling
     if (notification is ScrollUpdateNotification) {
       final delta = notification.scrollDelta;
-      if (delta != null && delta.abs() > 2) {
-        debugPrint("onScrollNotification: delta = $delta, isAppBarVisible = ${isAppBarVisible.value}");
+      if (delta != null && delta.abs() > 10) {
         if (delta > 0 && isAppBarVisible.value) {
           isAppBarVisible.value = false;
-          debugPrint("onScrollNotification: hiding AppBar");
+          debugPrint("onScrollNotification (update): hiding AppBar (focus mode)");
         } else if (delta < 0 && !isAppBarVisible.value) {
           isAppBarVisible.value = true;
-          debugPrint("onScrollNotification: showing AppBar");
+          debugPrint("onScrollNotification (update): showing AppBar");
         }
       }
     }

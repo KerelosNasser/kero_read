@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/folder_model.dart';
 import '../models/pdf_model.dart';
 import '../services/storage_service.dart';
@@ -87,10 +88,26 @@ class HomeController extends GetxController {
       return;
     }
 
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    final appDocDir = await getApplicationDocumentsDirectory();
+    final permanentPath = '${appDocDir.path}/${id}_$name';
+
+    try {
+      await file.copy(permanentPath);
+      // Clean up cache file if it was a temp file from sharing
+      if (path.contains('/cache/') || path.contains('/tmp/') || path.contains('/file_picker/')) {
+        try {
+          await file.delete();
+        } catch (_) {}
+      }
+    } catch (e) {
+      debugPrint("Error copying external PDF: $e");
+    }
+
     final pdf = PdfModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: id,
       name: name,
-      path: path,
+      path: File(permanentPath).existsSync() ? permanentPath : path,
       folderId: '', // Put it in the root folder
       timeAdded: DateTime.now(),
     );
@@ -167,13 +184,26 @@ class HomeController extends GetxController {
     );
 
     if (result != null && result.files.single.path != null) {
-      String path = result.files.single.path!;
+      String tempPath = result.files.single.path!;
       String name = result.files.single.name;
 
+      final id = DateTime.now().millisecondsSinceEpoch.toString();
+      final appDocDir = await getApplicationDocumentsDirectory();
+      final permanentPath = '${appDocDir.path}/${id}_$name';
+
+      try {
+        final tempFile = File(tempPath);
+        await tempFile.copy(permanentPath);
+      } catch (e) {
+        debugPrint("Error copying imported PDF: $e");
+        Get.snackbar('Import Error', 'Failed to copy PDF to permanent storage.');
+        return;
+      }
+
       final pdf = PdfModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: id,
         name: name,
-        path: path,
+        path: permanentPath,
         folderId: currentFolderId.value,
         timeAdded: DateTime.now(),
       );
@@ -188,6 +218,14 @@ class HomeController extends GetxController {
   Future<void> deletePdf(String id) async {
     final pdf = _storage.pdfBox.get(id);
     if (pdf != null) {
+      try {
+        final file = File(pdf.path);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      } catch (e) {
+        debugPrint("Error deleting PDF file: $e");
+      }
       await _storage.pdfBox.delete(id);
       _pdfsByFolder[pdf.folderId]?.removeWhere((p) => p.id == id);
       _updatePdfsList();

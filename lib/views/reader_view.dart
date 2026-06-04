@@ -99,16 +99,48 @@ class _ReaderViewState extends State<ReaderView> {
                     return ColorFiltered(
                       colorFilter: controller.isDarkMode.value
                           ? const ColorFilter.matrix([
-                              -1,  0,  0, 0, 255,
-                               0, -1,  0, 0, 255,
-                               0,  0, -1, 0, 255,
-                               0,  0,  0, 1,   0,
+                              -1,
+                              0,
+                              0,
+                              0,
+                              255,
+                              0,
+                              -1,
+                              0,
+                              0,
+                              255,
+                              0,
+                              0,
+                              -1,
+                              0,
+                              255,
+                              0,
+                              0,
+                              0,
+                              1,
+                              0,
                             ])
                           : const ColorFilter.matrix([
-                              1, 0, 0, 0, 0,
-                              0, 1, 0, 0, 0,
-                              0, 0, 1, 0, 0,
-                              0, 0, 0, 1, 0,
+                              1,
+                              0,
+                              0,
+                              0,
+                              0,
+                              0,
+                              1,
+                              0,
+                              0,
+                              0,
+                              0,
+                              0,
+                              1,
+                              0,
+                              0,
+                              0,
+                              0,
+                              0,
+                              1,
+                              0,
                             ]),
                       child: pdfViewer,
                     );
@@ -119,18 +151,19 @@ class _ReaderViewState extends State<ReaderView> {
               // 2. Glassy Frosted AppBar overlay
               Obx(() {
                 final bool isAppBarVisible = controller.isAppBarVisible.value;
+                final double topPadding = MediaQuery.of(context).padding.top;
+                const double appBarHeight = 60.0;
+                final double topOffset = topPadding + 5.0;
                 debugPrint(
                   "ReaderView Appbar Obx build: isAppBarVisible = $isAppBarVisible",
                 );
                 return AnimatedPositioned(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
-                  top: isAppBarVisible
-                      ? 0
-                      : -kToolbarHeight - MediaQuery.of(context).padding.top,
-                  left: 0,
-                  right: 0,
-                  height: kToolbarHeight + MediaQuery.of(context).padding.top,
+                  top: isAppBarVisible ? topOffset : -appBarHeight - topPadding,
+                  left: 22,
+                  right: 22,
+                  height: appBarHeight,
                   child: _buildGlassyAppBar(context),
                 );
               }),
@@ -145,7 +178,7 @@ class _ReaderViewState extends State<ReaderView> {
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
                   top: controller.isAppBarVisible.value
-                      ? topPadding + kToolbarHeight + 8
+                      ? topPadding + 76
                       : topPadding + 8,
                   right: 16,
                   child: Material(
@@ -251,9 +284,44 @@ class _ReaderViewState extends State<ReaderView> {
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 300),
             opacity: controller.isAppBarVisible.value ? 1.0 : 0.0,
-            child: FloatingActionButton(
-              onPressed: () => _showAiChatBottomSheet(context),
-              child: const Icon(Icons.chat),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  width: 1.0,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(28),
+                      onTap: () => _showAiChatBottomSheet(context),
+                      child: const Center(
+                        child: Icon(
+                          Icons.chat,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -262,52 +330,108 @@ class _ReaderViewState extends State<ReaderView> {
   }
 
   Widget _buildGlassyAppBar(BuildContext context) {
-    final double topPadding = MediaQuery.of(context).padding.top;
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: EdgeInsets.only(top: topPadding),
-          color: Colors.black.withValues(alpha: 0.35),
-          child: SizedBox(
-            height: kToolbarHeight,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.15),
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 10,
+            spreadRadius: 1,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            height: 60.0,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
             child: AppBar(
               backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          title: Text(widget.pdf.name, overflow: TextOverflow.ellipsis),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.search),
-              tooltip: "Search Text",
-              onPressed: () => controller.toggleSearchBar(),
-            ),
-            IconButton(
-              icon: const Icon(Icons.document_scanner),
-              tooltip: "Scan PDF with OCR",
-              onPressed: () => controller.performOcr(),
-            ),
-            IconButton(
-              icon: const Icon(Icons.screen_rotation),
-              onPressed: controller.toggleOrientation,
-            ),
-            Obx(
-              () => IconButton(
-                icon: Icon(
-                  controller.isDarkMode.value
-                      ? Icons.light_mode
-                      : Icons.dark_mode,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              toolbarHeight:
+                  60.0, // Match container height to center elements perfectly
+              leadingWidth: 10,
+              titleSpacing: 0,
+              leading: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back,
+                  size: 10,
+                  color: Colors.white,
                 ),
-                onPressed: controller.toggleDarkMode,
+                onPressed: () => Navigator.maybePop(context),
               ),
+              title: Text(
+                widget.pdf.name,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.search, size: 20, color: Colors.white),
+                  tooltip: "Search Text",
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  constraints: const BoxConstraints(),
+                  onPressed: () => controller.toggleSearchBar(),
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.document_scanner,
+                    size: 20,
+                    color: Colors.white,
+                  ),
+                  tooltip: "Scan PDF with OCR",
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  constraints: const BoxConstraints(),
+                  onPressed: () => controller.performOcr(),
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.screen_rotation,
+                    size: 20,
+                    color: Colors.white,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  constraints: const BoxConstraints(),
+                  onPressed: controller.toggleOrientation,
+                ),
+                Obx(
+                  () => IconButton(
+                    icon: Icon(
+                      controller.isDarkMode.value
+                          ? Icons.light_mode
+                          : Icons.dark_mode,
+                      size: 20,
+                      color: Colors.white,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    constraints: const BoxConstraints(),
+                    onPressed: controller.toggleDarkMode,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    ),
-   ),
-  );
- }
+    );
+  }
 
   void _showAiChatBottomSheet(BuildContext context) {
     final AiController aiController = Get.find<AiController>();
