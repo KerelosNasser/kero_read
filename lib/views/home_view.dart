@@ -15,7 +15,10 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Obx(() => Text(controller.currentFolderId.isEmpty ? 'Kero Read' : 'Folder')),
+        title: Obx(
+          () =>
+              Text(controller.currentFolderId.isEmpty ? 'Kero Read' : 'Folder'),
+        ),
         leading: Obx(() {
           if (controller.currentFolderId.isNotEmpty) {
             return IconButton(
@@ -29,7 +32,7 @@ class HomeView extends GetView<HomeController> {
       body: Obx(() {
         final items = [
           if (controller.currentFolderId.isEmpty) ...controller.folders,
-          ...controller.pdfs
+          ...controller.pdfs,
         ];
 
         if (items.isEmpty) {
@@ -79,7 +82,10 @@ class HomeView extends GetView<HomeController> {
           children: [
             const Icon(Icons.folder, size: 48, color: Colors.amber),
             const SizedBox(height: 8),
-            Text(folder.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              folder.name,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
@@ -102,7 +108,7 @@ class HomeView extends GetView<HomeController> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Text(
-                pdf.name, 
+                pdf.name,
                 style: const TextStyle(fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -127,7 +133,10 @@ class HomeView extends GetView<HomeController> {
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
                   folder.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -196,7 +205,10 @@ class HomeView extends GetView<HomeController> {
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
                   pdf.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -278,7 +290,10 @@ class HomeView extends GetView<HomeController> {
                     padding: EdgeInsets.all(16.0),
                     child: Text(
                       'Move to Folder',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
                   ),
                   const Divider(height: 1),
@@ -302,23 +317,34 @@ class HomeView extends GetView<HomeController> {
                             return ListTile(
                               leading: const Icon(Icons.home),
                               title: const Text('Home (Root)'),
-                              trailing: isHome ? const Icon(Icons.check, color: Colors.green) : null,
-                              onTap: isHome ? null : () {
-                                controller.movePdf(pdf.id, '');
-                                Get.back();
-                              },
+                              trailing: isHome
+                                  ? const Icon(Icons.check, color: Colors.green)
+                                  : null,
+                              onTap: isHome
+                                  ? null
+                                  : () {
+                                      controller.movePdf(pdf.id, '');
+                                      Get.back();
+                                    },
                             );
                           }
                           final folder = controller.folders[index - 1];
                           final isCurrent = pdf.folderId == folder.id;
                           return ListTile(
-                            leading: const Icon(Icons.folder, color: Colors.amber),
+                            leading: const Icon(
+                              Icons.folder,
+                              color: Colors.amber,
+                            ),
                             title: Text(folder.name),
-                            trailing: isCurrent ? const Icon(Icons.check, color: Colors.green) : null,
-                            onTap: isCurrent ? null : () {
-                              controller.movePdf(pdf.id, folder.id);
-                              Get.back();
-                            },
+                            trailing: isCurrent
+                                ? const Icon(Icons.check, color: Colors.green)
+                                : null,
+                            onTap: isCurrent
+                                ? null
+                                : () {
+                                    controller.movePdf(pdf.id, folder.id);
+                                    Get.back();
+                                  },
                           );
                         },
                       );
@@ -355,7 +381,6 @@ class HomeView extends GetView<HomeController> {
       textCancel: "Cancel",
     );
   }
-
 
   void _showAddOptions(BuildContext context) {
     showModalBottomSheet(
@@ -404,7 +429,7 @@ class HomeView extends GetView<HomeController> {
       textCancel: "Cancel",
       onCancel: () {
         controller.folderNameController.clear();
-      }
+      },
     );
   }
 }
