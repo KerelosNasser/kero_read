@@ -50,6 +50,14 @@ class AiController extends GetxController {
     });
   }
 
+  void jumpToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (scrollController.hasClients) {
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+      }
+    });
+  }
+
   Future<void> askPresetQuestion(String question) async {
     chatTextController.text = question;
     await askQuestion();
@@ -75,8 +83,25 @@ class AiController extends GetxController {
         debugPrint("Could not render page image: $e");
       }
       
-      String response = await _aiService.askQuestion(question, imageBytes: imageBytes);
-      messages.add({'role': 'ai', 'content': response});
+      int aiMsgIndex = messages.length;
+      messages.add({'role': 'ai', 'content': ''});
+      scrollToBottom();
+
+      String fullResponse = '';
+      try {
+        final stream = _aiService.askQuestionStream(question, imageBytes: imageBytes);
+        await for (final chunk in stream) {
+          fullResponse += chunk;
+          messages[aiMsgIndex] = {'role': 'ai', 'content': '$fullResponse ▊'};
+          jumpToBottom();
+        }
+        messages[aiMsgIndex] = {'role': 'ai', 'content': fullResponse};
+      } catch (e) {
+        messages[aiMsgIndex] = {
+          'role': 'ai',
+          'content': 'Error generating response: $e'
+        };
+      }
       scrollToBottom();
     } finally {
       isLoading.value = false;
