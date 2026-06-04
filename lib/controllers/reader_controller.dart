@@ -98,6 +98,7 @@ class ReaderController extends GetxController {
 
   void setPdf(PdfModel pdf) {
     currentPdf = pdf;
+    currentPdf.lastReadPage = 1;
   }
 
   void toggleDarkMode() {
@@ -173,17 +174,24 @@ class ReaderController extends GetxController {
 
   void toggleAppBarVisibility() {
     isAppBarVisible.value = !isAppBarVisible.value;
+    debugPrint("toggleAppBarVisibility: new value = ${isAppBarVisible.value}");
   }
 
   void onScrollNotification(ScrollNotification notification) {
-    if (_isInitialLoad) return;
+    if (_isInitialLoad) {
+      debugPrint("onScrollNotification: ignored due to initial load");
+      return;
+    }
     if (notification is ScrollUpdateNotification) {
       final delta = notification.scrollDelta;
       if (delta != null && delta.abs() > 2) {
+        debugPrint("onScrollNotification: delta = $delta, isAppBarVisible = ${isAppBarVisible.value}");
         if (delta > 0 && isAppBarVisible.value) {
           isAppBarVisible.value = false;
+          debugPrint("onScrollNotification: hiding AppBar");
         } else if (delta < 0 && !isAppBarVisible.value) {
           isAppBarVisible.value = true;
+          debugPrint("onScrollNotification: showing AppBar");
         }
       }
     }

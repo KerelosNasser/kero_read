@@ -54,8 +54,38 @@ class HomeController extends GetxController {
     final file = File(path);
     if (!await file.exists()) return;
 
-    // Extract name from path or give a default
+    final int length = await file.length();
     final name = path.split('/').last;
+
+    // Check if the same file is already registered in the library
+    PdfModel? existingPdf;
+    try {
+      existingPdf = _storage.pdfBox.values.firstWhere((p) {
+        final f = File(p.path);
+        if (f.existsSync()) {
+          try {
+            return f.lengthSync() == length && p.name == name;
+          } catch (_) {
+            return false;
+          }
+        }
+        return false;
+      });
+    } catch (_) {
+      existingPdf = null;
+    }
+
+    if (existingPdf != null) {
+      if (existingPdf.path != path) {
+        try {
+          await file.delete();
+        } catch (e) {
+          debugPrint("Failed to delete duplicate cache file: $e");
+        }
+      }
+      Get.to(() => ReaderView(pdf: existingPdf!));
+      return;
+    }
 
     final pdf = PdfModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -66,7 +96,7 @@ class HomeController extends GetxController {
     );
 
     await _storage.pdfBox.put(pdf.id, pdf);
-    
+
     // Incremental index update
     _pdfsByFolder.putIfAbsent(pdf.folderId, () => []).add(pdf);
     _updatePdfsList();
@@ -88,7 +118,7 @@ class HomeController extends GetxController {
 
   void loadData() {
     folders.value = _storage.folderBox.values.toList();
-    
+
     _pdfsByFolder.clear();
     for (var pdf in _storage.pdfBox.values) {
       _pdfsByFolder.putIfAbsent(pdf.folderId, () => []).add(pdf);
@@ -97,7 +127,9 @@ class HomeController extends GetxController {
   }
 
   void _updatePdfsList() {
-    pdfs.value = List<PdfModel>.from(_pdfsByFolder[currentFolderId.value] ?? []);
+    pdfs.value = List<PdfModel>.from(
+      _pdfsByFolder[currentFolderId.value] ?? [],
+    );
   }
 
   void openFolder(String folderId) {
@@ -147,7 +179,7 @@ class HomeController extends GetxController {
       );
 
       await _storage.pdfBox.put(pdf.id, pdf);
-      
+
       _pdfsByFolder.putIfAbsent(pdf.folderId, () => []).add(pdf);
       _updatePdfsList();
     }
@@ -165,10 +197,10 @@ class HomeController extends GetxController {
   Future<void> deleteFolder(String id) async {
     final toDelete = _pdfsByFolder[id] ?? [];
     final idsToDelete = toDelete.map((p) => p.id).toList();
-    
+
     await _storage.pdfBox.deleteAll(idsToDelete);
     await _storage.folderBox.delete(id);
-    
+
     _pdfsByFolder.remove(id);
     folders.removeWhere((f) => f.id == id);
     _updatePdfsList();
@@ -180,7 +212,7 @@ class HomeController extends GetxController {
       final oldFolderId = pdf.folderId;
       pdf.folderId = targetFolderId;
       await _storage.pdfBox.put(pdf.id, pdf);
-      
+
       _pdfsByFolder[oldFolderId]?.removeWhere((p) => p.id == id);
       _pdfsByFolder.putIfAbsent(targetFolderId, () => []).add(pdf);
       _updatePdfsList();
@@ -201,7 +233,7 @@ class HomeController extends GetxController {
     if (folder != null && newName.trim().isNotEmpty) {
       folder.name = newName.trim();
       await _storage.folderBox.put(folder.id, folder);
-      
+
       final index = folders.indexWhere((f) => f.id == id);
       if (index != -1) {
         folders[index] = folder;
@@ -210,4 +242,3 @@ class HomeController extends GetxController {
     }
   }
 }
-
