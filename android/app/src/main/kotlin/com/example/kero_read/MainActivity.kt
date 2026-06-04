@@ -48,8 +48,16 @@ class MainActivity : FlutterActivity() {
         if (Intent.ACTION_VIEW == action && data != null) {
             try {
                 contentResolver.openInputStream(data)?.use { inputStream ->
-                    val fileName = "imported_${System.currentTimeMillis()}.pdf"
-                    val file = File(cacheDir, fileName)
+                    val originalName = getDisplayName(data)
+                    var fileName = originalName
+                    var file = File(cacheDir, fileName)
+                    var counter = 1
+                    val baseName = originalName.substringBeforeLast(".pdf")
+                    while (file.exists()) {
+                        fileName = "${baseName}_$counter.pdf"
+                        file = File(cacheDir, fileName)
+                        counter++
+                    }
                     FileOutputStream(file).use { outputStream ->
                         inputStream.copyTo(outputStream)
                     }
@@ -60,4 +68,46 @@ class MainActivity : FlutterActivity() {
             }
         }
     }
+
+    private fun getDisplayName(uri: android.net.Uri): String {
+        var name: String? = null
+        if (uri.scheme == "content") {
+            try {
+                contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                        if (index != -1) {
+                            name = cursor.getString(index)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        if (name == null) {
+            name = uri.path
+            val cut = name?.lastIndexOf('/') ?: -1
+            if (cut != -1) {
+                name = name?.substring(cut + 1)
+            }
+        }
+        if (name != null) {
+            try {
+                name = java.net.URLDecoder.decode(name, "UTF-8")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        // Sanitize name: remove invalid chars
+        name = name?.replace("[\\\\/:*?\"<>|]".toRegex(), "_")
+        if (name.isNullOrBlank()) {
+            name = "imported_${System.currentTimeMillis()}"
+        }
+        if (!name.lowercase().endsWith(".pdf")) {
+            name = "$name.pdf"
+        }
+        return name
+    }
 }
+

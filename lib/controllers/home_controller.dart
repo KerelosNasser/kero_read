@@ -110,9 +110,8 @@ class HomeController extends GetxController {
     _updatePdfsList();
   }
 
-  Future<void> createFolder() async {
-    String name = folderNameController.text;
-    if (name.trim().isEmpty) return;
+  Future<FolderModel?> createFolderWithName(String name) async {
+    if (name.trim().isEmpty) return null;
 
     final folder = FolderModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -120,8 +119,13 @@ class HomeController extends GetxController {
       createdAt: DateTime.now(),
     );
     await _storage.folderBox.put(folder.id, folder);
-    folderNameController.clear();
     folders.add(folder);
+    return folder;
+  }
+
+  Future<void> createFolder() async {
+    await createFolderWithName(folderNameController.text);
+    folderNameController.clear();
   }
 
   Future<void> importPdf() async {
@@ -169,4 +173,41 @@ class HomeController extends GetxController {
     folders.removeWhere((f) => f.id == id);
     _updatePdfsList();
   }
+
+  Future<void> movePdf(String id, String targetFolderId) async {
+    final pdf = _storage.pdfBox.get(id);
+    if (pdf != null) {
+      final oldFolderId = pdf.folderId;
+      pdf.folderId = targetFolderId;
+      await _storage.pdfBox.put(pdf.id, pdf);
+      
+      _pdfsByFolder[oldFolderId]?.removeWhere((p) => p.id == id);
+      _pdfsByFolder.putIfAbsent(targetFolderId, () => []).add(pdf);
+      _updatePdfsList();
+    }
+  }
+
+  Future<void> renamePdf(String id, String newName) async {
+    final pdf = _storage.pdfBox.get(id);
+    if (pdf != null && newName.trim().isNotEmpty) {
+      pdf.name = newName.trim();
+      await _storage.pdfBox.put(pdf.id, pdf);
+      _updatePdfsList();
+    }
+  }
+
+  Future<void> renameFolder(String id, String newName) async {
+    final folder = _storage.folderBox.get(id);
+    if (folder != null && newName.trim().isNotEmpty) {
+      folder.name = newName.trim();
+      await _storage.folderBox.put(folder.id, folder);
+      
+      final index = folders.indexWhere((f) => f.id == id);
+      if (index != -1) {
+        folders[index] = folder;
+        folders.refresh();
+      }
+    }
+  }
 }
+
