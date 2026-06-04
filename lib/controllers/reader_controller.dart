@@ -13,7 +13,7 @@ import '../controllers/ai_controller.dart';
 class ReaderController extends GetxController {
   var isDarkMode = false.obs;
   var isLandscape = false.obs;
-  
+
   late PdfModel currentPdf;
   late PdfViewerController pdfController;
   final textSearcher = Rxn<PdfTextSearcher>();
@@ -32,6 +32,10 @@ class ReaderController extends GetxController {
   var totalMatches = 0.obs;
   var isSearching = false.obs;
 
+  // Page tracking
+  var currentPage = 1.obs;
+  var pageCount = 0.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -41,7 +45,10 @@ class ReaderController extends GetxController {
     // Dynamically toggle full screen focus mode
     ever(isAppBarVisible, (bool visible) {
       if (visible) {
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
+        SystemChrome.setEnabledSystemUIMode(
+          SystemUiMode.manual,
+          overlays: SystemUiOverlay.values,
+        );
       } else {
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       }
@@ -59,7 +66,8 @@ class ReaderController extends GetxController {
     searcher.addListener(() {
       isSearching.value = searcher.isSearching;
       totalMatches.value = searcher.matches.length;
-      currentMatchIndex.value = (searcher.currentIndex ?? -1) + 1; // 1-indexed for display
+      currentMatchIndex.value =
+          (searcher.currentIndex ?? -1) + 1; // 1-indexed for display
     });
     textSearcher.value = searcher;
   }
@@ -77,7 +85,11 @@ class ReaderController extends GetxController {
       return;
     }
     // High performance search utilizing pdfrx caching
-    textSearcher.value?.startTextSearch(query, caseInsensitive: true, goToFirstMatch: true);
+    textSearcher.value?.startTextSearch(
+      query,
+      caseInsensitive: true,
+      goToFirstMatch: true,
+    );
   }
 
   void nextMatch() {
@@ -99,7 +111,7 @@ class ReaderController extends GetxController {
 
   void setPdf(PdfModel pdf) {
     currentPdf = pdf;
-    currentPdf.lastReadPage = 1;
+    currentPage.value = pdf.lastReadPage;
   }
 
   void toggleDarkMode() {
@@ -127,7 +139,10 @@ class ReaderController extends GetxController {
   }
 
   Future<void> performOcr() async {
-    Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+    Get.dialog(
+      const Center(child: CircularProgressIndicator()),
+      barrierDismissible: false,
+    );
     final ocrService = Get.find<OcrService>();
     String? result = await ocrService.performOcr(File(currentPdf.path));
     Get.back(); // close loading
@@ -185,10 +200,12 @@ class ReaderController extends GetxController {
 
     // Touch drag scroll handling
     if (notification is UserScrollNotification) {
-      if (notification.direction == ScrollDirection.reverse && isAppBarVisible.value) {
+      if (notification.direction == ScrollDirection.reverse &&
+          isAppBarVisible.value) {
         isAppBarVisible.value = false;
         debugPrint("onScrollNotification (user): hiding AppBar (focus mode)");
-      } else if (notification.direction == ScrollDirection.forward && !isAppBarVisible.value) {
+      } else if (notification.direction == ScrollDirection.forward &&
+          !isAppBarVisible.value) {
         isAppBarVisible.value = true;
         debugPrint("onScrollNotification (user): showing AppBar");
       }
@@ -200,7 +217,9 @@ class ReaderController extends GetxController {
       if (delta != null && delta.abs() > 10) {
         if (delta > 0 && isAppBarVisible.value) {
           isAppBarVisible.value = false;
-          debugPrint("onScrollNotification (update): hiding AppBar (focus mode)");
+          debugPrint(
+            "onScrollNotification (update): hiding AppBar (focus mode)",
+          );
         } else if (delta < 0 && !isAppBarVisible.value) {
           isAppBarVisible.value = true;
           debugPrint("onScrollNotification (update): showing AppBar");
@@ -240,7 +259,10 @@ class ReaderController extends GetxController {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: SystemUiOverlay.values,
+    );
     textSearcher.value?.dispose();
     searchTextController.dispose();
     _cachedSyncDoc?.dispose();

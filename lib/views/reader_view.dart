@@ -45,6 +45,47 @@ class _ReaderViewState extends State<ReaderView> {
           controller.toggleAppBarVisibility();
           return false;
         },
+        onInteractionUpdate: (details) {
+          final dy = details.focalPointDelta.dy;
+          if (dy < -3 && controller.isAppBarVisible.value) {
+            controller.isAppBarVisible.value = false;
+          } else if (dy > 3 && !controller.isAppBarVisible.value) {
+            controller.isAppBarVisible.value = true;
+          }
+        },
+        buildContextMenu: (context, params) {
+          return Align(
+            alignment: Alignment.topLeft,
+            child: AdaptiveTextSelectionToolbar.buttonItems(
+              anchors: TextSelectionToolbarAnchors(
+                primaryAnchor: params.anchorA,
+                secondaryAnchor: params.anchorB,
+              ),
+              buttonItems: [
+                ContextMenuButtonItem(
+                  onPressed: () {
+                    params.textSelectionDelegate.copyTextSelection();
+                    params.textSelectionDelegate.clearTextSelection();
+                  },
+                  type: ContextMenuButtonType.copy,
+                ),
+                ContextMenuButtonItem(
+                  onPressed: () async {
+                    final selectedText = await params.textSelectionDelegate.getSelectedText();
+                    params.textSelectionDelegate.clearTextSelection();
+                    if (selectedText.isNotEmpty && context.mounted) {
+                      _showAiChatBottomSheet(
+                        context,
+                        initialQuestion: 'Explain: "$selectedText"',
+                      );
+                    }
+                  },
+                  label: "Ask Gemini",
+                ),
+              ],
+            ),
+          );
+        },
         pagePaintCallbacks: [
           (canvas, pageRect, page) {
             final searcher = controller.textSearcher.value;
@@ -55,6 +96,7 @@ class _ReaderViewState extends State<ReaderView> {
         ],
         onPageChanged: (page) {
           if (page != null) {
+            controller.currentPage.value = page;
             controller.updateLastReadPage(page);
             controller.extractTextForAi(page);
           }
@@ -63,6 +105,7 @@ class _ReaderViewState extends State<ReaderView> {
           debugPrint(
             "onViewerReady: Document loaded successfully. Page count: ${document.pages.length}",
           );
+          controller.pageCount.value = document.pages.length;
           controller.initTextSearcher();
         },
         errorBannerBuilder: (context, error, stackTrace, documentRef) {
@@ -270,6 +313,75 @@ class _ReaderViewState extends State<ReaderView> {
                   ),
                 );
               }),
+              // 4. Glassy Page Indexer overlay at bottom center
+              Positioned(
+                bottom: 24,
+                left: 0,
+                right: 0,
+                child: Obx(
+                  () => AnimatedSlide(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    offset: controller.isAppBarVisible.value
+                        ? Offset.zero
+                        : const Offset(0, 2),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: controller.isAppBarVisible.value ? 1.0 : 0.0,
+                      child: Center(
+                        child: controller.pageCount.value == 0
+                            ? const SizedBox.shrink()
+                            : ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(
+                                    sigmaX: 12,
+                                    sigmaY: 12,
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.65,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.15,
+                                        ),
+                                        width: 1.0,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.3,
+                                          ),
+                                          blurRadius: 10,
+                                          spreadRadius: 1,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      "${controller.currentPage.value} / ${controller.pageCount.value}",
+                                      style: const TextStyle(
+                                        color: Colors.black87,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           );
         },
@@ -313,10 +425,7 @@ class _ReaderViewState extends State<ReaderView> {
                       borderRadius: BorderRadius.circular(28),
                       onTap: () => _showAiChatBottomSheet(context),
                       child: const Center(
-                        child: Icon(
-                          Icons.chat,
-                          color: Colors.white,
-                        ),
+                        child: Icon(Icons.chat, color: Colors.white),
                       ),
                     ),
                   ),
@@ -433,8 +542,15 @@ class _ReaderViewState extends State<ReaderView> {
     );
   }
 
-  void _showAiChatBottomSheet(BuildContext context) {
+  void _showAiChatBottomSheet(BuildContext context, {String? initialQuestion}) {
     final AiController aiController = Get.find<AiController>();
+
+    if (initialQuestion != null && initialQuestion.isNotEmpty) {
+      Future.delayed(const Duration(milliseconds: 350), () {
+        aiController.chatTextController.text = initialQuestion;
+        aiController.askQuestion();
+      });
+    }
 
     showModalBottomSheet(
       context: context,
