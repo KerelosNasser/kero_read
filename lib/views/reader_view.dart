@@ -86,6 +86,18 @@ class _ReaderViewState extends State<ReaderView> {
                           onViewerReady: (document, pdfController) {
                             controller.initTextSearcher();
                           },
+                          errorBannerBuilder: (context, error, stackTrace, documentRef) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(32.0),
+                                child: Text(
+                                  "Error loading PDF:\n$error",
+                                  style: const TextStyle(color: Colors.redAccent, fontSize: 16),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     );
