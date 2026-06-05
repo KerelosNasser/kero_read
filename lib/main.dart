@@ -32,9 +32,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.dark,
         colorScheme: const ColorScheme.dark(
-          primary: Colors.tealAccent,
-          surface: Color(0xFF1E1E1E),
+          primary: Colors.white,
+          surface: Color(0xFF141527),
         ),
+        scaffoldBackgroundColor: const Color(0xFF141527),
         useMaterial3: true,
       ),
       home: HomeView(),

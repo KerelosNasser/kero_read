@@ -101,16 +101,16 @@ class _GenerativePlaceholderState extends State<GenerativePlaceholder>
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.tealAccent.withValues(alpha: 0.04),
+                        color: Colors.white.withValues(alpha: 0.04),
                         border: Border.all(
-                          color: Colors.tealAccent.withValues(alpha: 0.15),
+                          color: Colors.white.withValues(alpha: 0.15),
                           width: 1,
                         ),
                       ),
                       child: const Icon(
                         Icons.library_books_outlined,
                         size: 48,
-                        color: Colors.tealAccent,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -208,7 +208,7 @@ class ParticlePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.tealAccent.withValues(alpha: 0.2)
+      ..color = Colors.white.withValues(alpha: 0.2)
       ..strokeWidth = 1.0;
 
     // Update and draw particles
@@ -223,7 +223,7 @@ class ParticlePainter extends CustomPainter {
       final double glowOpacity =
           0.2 + 0.1 * math.sin(animationValue * math.pi * 2 + p1.phase);
       final glowPaint = Paint()
-        ..color = Colors.tealAccent.withValues(alpha: glowOpacity)
+        ..color = Colors.white.withValues(alpha: glowOpacity)
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(Offset(p1X, p1Y), p1.radius, glowPaint);
@@ -241,7 +241,7 @@ class ParticlePainter extends CustomPainter {
         if (dist < 100) {
           // Fade connection line based on distance
           final double opacity = (1.0 - (dist / 100)) * 0.15;
-          paint.color = Colors.tealAccent.withValues(alpha: opacity);
+          paint.color = Colors.white.withValues(alpha: opacity);
           canvas.drawLine(Offset(p1X, p1Y), Offset(p2X, p2Y), paint);
         }
       }
