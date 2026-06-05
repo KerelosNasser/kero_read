@@ -53,8 +53,8 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
       ),
       blurX: 15.0,
       blurY: 15.0,
-      color: Colors.black.withValues(alpha: 0.75),
-      border: Border.all(color: Colors.transparent),
+      color: Colors.white.withValues(alpha: 0.08),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
       child: Container(
         height: MediaQuery.of(context).size.height * 0.75,
         padding: EdgeInsets.only(
@@ -82,7 +82,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                   children: [
                     Icon(
                       Icons.auto_awesome,
-                      color: Colors.tealAccent,
+                      color: Colors.white70,
                       size: 20,
                     ),
                     SizedBox(width: 8),
@@ -180,12 +180,12 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                     chipText,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Colors.tealAccent,
+                      color: Colors.white70,
                     ),
                   ),
-                  backgroundColor: Colors.teal.withValues(alpha: 0.15),
-                  side: const BorderSide(
-                    color: Colors.tealAccent,
+                  backgroundColor: Colors.white.withValues(alpha: 0.08),
+                  side: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.15),
                     width: 0.5,
                   ),
                   onPressed: () => aiController.askPresetQuestion(chipText),
@@ -216,8 +216,8 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
               ),
               decoration: BoxDecoration(
                 color: isUser
-                    ? Colors.teal[800]!.withValues(alpha: 0.8)
-                    : Colors.grey[900]!.withValues(alpha: 0.8),
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(12),
                   topRight: const Radius.circular(12),
@@ -225,7 +225,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                   bottomRight: Radius.circular(isUser ? 0 : 12),
                 ),
                 border: Border.all(
-                  color: isUser ? Colors.tealAccent.withValues(alpha: 0.2) : Colors.white12,
+                  color: Colors.white.withValues(alpha: 0.10),
                 ),
               ),
               child: isUser
@@ -258,18 +258,15 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
       margin: const EdgeInsets.only(right: 8, top: 4),
       width: 28,
       height: 28,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: [Colors.tealAccent, Colors.teal],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Colors.white.withValues(alpha: 0.15),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 0.5),
       ),
       child: const Icon(
         Icons.auto_awesome,
         size: 14,
-        color: Colors.black,
+        color: Colors.white,
       ),
     );
   }
@@ -302,7 +299,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
             height: 16,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: Colors.tealAccent,
+              color: Colors.white70,
             ),
           ),
           const SizedBox(width: 10),
@@ -355,7 +352,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
             child: IconButton(
               icon: const Icon(
                 Icons.send,
-                color: Colors.tealAccent,
+                color: Colors.white,
               ),
               onPressed: aiController.isLoading.value
                   ? null

@@ -13,9 +13,13 @@ class FolderModel extends HiveObject {
   @HiveField(2)
   DateTime createdAt;
 
+  @HiveField(3)
+  int? colorValue;
+
   FolderModel({
     required this.id,
     required this.name,
     required this.createdAt,
+    this.colorValue,
   });
 }

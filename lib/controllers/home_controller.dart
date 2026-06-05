@@ -155,22 +155,40 @@ class HomeController extends GetxController {
     _updatePdfsList();
   }
 
-  Future<FolderModel?> createFolderWithName(String name) async {
+  Future<FolderModel?> createFolderWithName(String name, {int? colorValue}) async {
     if (name.trim().isEmpty) return null;
 
     final folder = FolderModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name.trim(),
       createdAt: DateTime.now(),
+      colorValue: colorValue,
     );
     await _storage.folderBox.put(folder.id, folder);
     folders.add(folder);
     return folder;
   }
 
+  var selectedColor = 0xFFFFB300.obs;
+
   Future<void> createFolder() async {
-    await createFolderWithName(folderNameController.text);
+    await createFolderWithName(folderNameController.text, colorValue: selectedColor.value);
     folderNameController.clear();
+    selectedColor.value = 0xFFFFB300;
+  }
+
+  Future<void> updateFolderColor(String id, int colorValue) async {
+    final folder = _storage.folderBox.get(id);
+    if (folder != null) {
+      folder.colorValue = colorValue;
+      await _storage.folderBox.put(folder.id, folder);
+
+      final index = folders.indexWhere((f) => f.id == id);
+      if (index != -1) {
+        folders[index] = folder;
+        folders.refresh();
+      }
+    }
   }
 
   Future<void> importPdf() async {
