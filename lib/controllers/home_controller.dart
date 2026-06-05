@@ -11,7 +11,7 @@ import '../views/reader_view.dart';
 import 'dart:io';
 
 class HomeController extends GetxController {
-  static const platform = MethodChannel('kero_read/intent');
+  static const _intentChannel = MethodChannel('kero_read/intent');
 
   final StorageService _storage = Get.find<StorageService>();
   late TextEditingController folderNameController;
@@ -34,7 +34,7 @@ class HomeController extends GetxController {
 
   void setupIntentListener() {
     // Listen for intents while app is running
-    platform.setMethodCallHandler((call) async {
+    _intentChannel.setMethodCallHandler((call) async {
       if (call.method == "onPdfOpened") {
         final path = call.arguments as String?;
         if (path != null) {
@@ -44,7 +44,7 @@ class HomeController extends GetxController {
     });
 
     // Check for intent when app cold-starts
-    platform.invokeMethod<String>('getInitialPdf').then((path) {
+    _intentChannel.invokeMethod<String>('getInitialPdf').then((path) {
       if (path != null) {
         _handleExternalPdf(path);
       }
@@ -60,20 +60,16 @@ class HomeController extends GetxController {
 
     // Check if the same file is already registered in the library
     PdfModel? existingPdf;
-    try {
-      existingPdf = _storage.pdfBox.values.firstWhere((p) {
-        final f = File(p.path);
-        if (f.existsSync()) {
-          try {
-            return f.lengthSync() == length && p.name == name;
-          } catch (_) {
-            return false;
+    for (var pdf in _storage.pdfBox.values) {
+      final f = File(pdf.path);
+      if (f.existsSync()) {
+        try {
+          if (f.lengthSync() == length && pdf.name == name) {
+            existingPdf = pdf;
+            break;
           }
-        }
-        return false;
-      });
-    } catch (_) {
-      existingPdf = null;
+        } catch (_) {}
+      }
     }
 
     if (existingPdf != null) {

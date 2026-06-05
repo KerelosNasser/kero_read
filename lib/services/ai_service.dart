@@ -45,26 +45,30 @@ class AiService extends GetxService {
     _currentPageContext = text;
   }
 
+  Content _buildPromptContent(String question, Uint8List? imageBytes) {
+    const String systemPrompt =
+        "You are an expert tutor. Answer the question based on the PDF text/image.\n"
+        "Guidelines:\n"
+        "1. NO filler, NO intro/outro (e.g. 'Sure!', 'Here is the explanation', 'Let me know...'). Start directly with the answer/explanation.\n"
+        "2. Minimize tokens: Be extremely brief, concise, and structured. Use short bullet points.\n"
+        "3. Render math equations using standard LaTeX (\$...\$ for inline, \$\$...\$\$ for block).\n"
+        "4. Render tables using standard markdown.\n"
+        "5. Break down complex formulas/concepts step-by-step simply.";
+
+    final promptText =
+        "$systemPrompt\n\n"
+        "Text context from page: $_currentPageContext\n\n"
+        "Question: $question";
+
+    return Content.multi([
+      TextPart(promptText),
+      if (imageBytes != null) DataPart('image/png', imageBytes),
+    ]);
+  }
+
   Future<String> askQuestion(String question, {Uint8List? imageBytes}) async {
     try {
-      final String systemPrompt =
-          "You are an expert tutor. Answer the question based on the PDF text/image.\n"
-          "Guidelines:\n"
-          "1. NO filler, NO intro/outro (e.g. 'Sure!', 'Here is the explanation', 'Let me know...'). Start directly with the answer/explanation.\n"
-          "2. Minimize tokens: Be extremely brief, concise, and structured. Use short bullet points.\n"
-          "3. Render math equations using standard LaTeX (\$...\$ for inline, \$\$...\$\$ for block).\n"
-          "4. Render tables using standard markdown.\n"
-          "5. Break down complex formulas/concepts step-by-step simply.";
-
-      final promptText =
-          "$systemPrompt\n\n"
-          "Text context from page: $_currentPageContext\n\n"
-          "Question: $question";
-
-      final content = Content.multi([
-        TextPart(promptText),
-        if (imageBytes != null) DataPart('image/png', imageBytes),
-      ]);
+      final content = _buildPromptContent(question, imageBytes);
 
       // Try sending with current model first
       try {
@@ -97,24 +101,7 @@ class AiService extends GetxService {
 
   Stream<String> askQuestionStream(String question, {Uint8List? imageBytes}) async* {
     try {
-      final String systemPrompt =
-          "You are an expert tutor. Answer the question based on the PDF text/image.\n"
-          "Guidelines:\n"
-          "1. NO filler, NO intro/outro (e.g. 'Sure!', 'Here is the explanation', 'Let me know...'). Start directly with the answer/explanation.\n"
-          "2. Minimize tokens: Be extremely brief, concise, and structured. Use short bullet points.\n"
-          "3. Render math equations using standard LaTeX (\$...\$ for inline, \$\$...\$\$ for block).\n"
-          "4. Render tables using standard markdown.\n"
-          "5. Break down complex formulas/concepts step-by-step simply.";
-
-      final promptText =
-          "$systemPrompt\n\n"
-          "Text context from page: $_currentPageContext\n\n"
-          "Question: $question";
-
-      final content = Content.multi([
-        TextPart(promptText),
-        if (imageBytes != null) DataPart('image/png', imageBytes),
-      ]);
+      final content = _buildPromptContent(question, imageBytes);
 
       // Try sending stream with current model first
       try {
