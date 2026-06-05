@@ -45,11 +45,7 @@ class HomeView extends GetView<HomeController> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF3B1578),
-              Color(0xFF1C0E4B),
-              Color(0xFF0C2461),
-            ],
+            colors: [Color(0xFF3B1578), Color(0xFF1C0E4B), Color(0xFF0C2461)],
           ),
         ),
         child: SafeArea(
@@ -62,7 +58,8 @@ class HomeView extends GetView<HomeController> {
             if (items.isEmpty) {
               return const GenerativePlaceholder(
                 title: "No Books or Folders Found",
-                subtitle: "Import a PDF file or create a folder to begin reading.",
+                subtitle:
+                    "Import a PDF file or create a folder to begin reading.",
               );
             }
 
@@ -216,7 +213,10 @@ class HomeView extends GetView<HomeController> {
                     children: [
                       TextButton(
                         onPressed: onCancel,
-                        child: const Text("Cancel", style: TextStyle(color: Colors.white70)),
+                        child: const Text(
+                          "Cancel",
+                          style: TextStyle(color: Colors.white70),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
@@ -285,19 +285,29 @@ class HomeView extends GetView<HomeController> {
                 const Divider(color: Colors.white12, height: 1),
                 // Color Selector Row
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12.0,
+                    horizontal: 16.0,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
                         "Folder Color",
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white70),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: Colors.white70,
+                        ),
                       ),
                       const SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: folderColors.map((colorVal) {
-                          final isCurrent = folder.colorValue == colorVal || (folder.colorValue == null && colorVal == 0xFFFFB300);
+                          final isCurrent =
+                              folder.colorValue == colorVal ||
+                              (folder.colorValue == null &&
+                                  colorVal == 0xFFFFB300);
                           return GestureDetector(
                             onTap: () {
                               controller.updateFolderColor(folder.id, colorVal);
@@ -310,12 +320,18 @@ class HomeView extends GetView<HomeController> {
                                 shape: BoxShape.circle,
                                 color: Color(colorVal),
                                 border: Border.all(
-                                  color: isCurrent ? Colors.white : Colors.transparent,
+                                  color: isCurrent
+                                      ? Colors.white
+                                      : Colors.transparent,
                                   width: 2,
                                 ),
                               ),
                               child: isCurrent
-                                  ? const Icon(Icons.check, size: 18, color: Colors.black)
+                                  ? const Icon(
+                                      Icons.check,
+                                      size: 18,
+                                      color: Colors.black,
+                                    )
                                   : null,
                             ),
                           );
@@ -327,7 +343,10 @@ class HomeView extends GetView<HomeController> {
                 const Divider(color: Colors.white12, height: 1),
                 ListTile(
                   leading: const Icon(Icons.edit, color: Colors.white70),
-                  title: const Text('Rename Folder', style: TextStyle(color: Colors.white)),
+                  title: const Text(
+                    'Rename Folder',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   onTap: () {
                     Get.back();
                     _showRenameFolderDialog(folder);
@@ -335,7 +354,10 @@ class HomeView extends GetView<HomeController> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.delete, color: Colors.redAccent),
-                  title: const Text('Delete Folder', style: TextStyle(color: Colors.redAccent)),
+                  title: const Text(
+                    'Delete Folder',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
                   onTap: () {
                     Get.back();
                     _showGlassyDialog(
@@ -374,8 +396,12 @@ class HomeView extends GetView<HomeController> {
         decoration: const InputDecoration(
           hintText: "Folder Name",
           hintStyle: TextStyle(color: Colors.white38),
-          enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white38)),
-          focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white38),
+          ),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white),
+          ),
         ),
       ),
       confirmText: "Rename",
@@ -420,8 +446,14 @@ class HomeView extends GetView<HomeController> {
                 ),
                 const Divider(color: Colors.white12, height: 1),
                 ListTile(
-                  leading: const Icon(Icons.drive_file_move, color: Colors.white70),
-                  title: const Text('Move to Folder', style: TextStyle(color: Colors.white)),
+                  leading: const Icon(
+                    Icons.drive_file_move,
+                    color: Colors.white70,
+                  ),
+                  title: const Text(
+                    'Move to Folder',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   onTap: () {
                     Get.back();
                     _showMovePdfSheet(context, pdf);
@@ -429,7 +461,10 @@ class HomeView extends GetView<HomeController> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.edit, color: Colors.white70),
-                  title: const Text('Rename PDF', style: TextStyle(color: Colors.white)),
+                  title: const Text(
+                    'Rename PDF',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   onTap: () {
                     Get.back();
                     _showRenamePdfDialog(pdf);
@@ -437,7 +472,10 @@ class HomeView extends GetView<HomeController> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.delete, color: Colors.redAccent),
-                  title: const Text('Delete PDF', style: TextStyle(color: Colors.redAccent)),
+                  title: const Text(
+                    'Delete PDF',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
                   onTap: () {
                     Get.back();
                     _showGlassyDialog(
@@ -476,8 +514,12 @@ class HomeView extends GetView<HomeController> {
         decoration: const InputDecoration(
           hintText: "PDF Name",
           hintStyle: TextStyle(color: Colors.white38),
-          enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white38)),
-          focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white38),
+          ),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white),
+          ),
         ),
       ),
       confirmText: "Rename",
@@ -528,8 +570,14 @@ class HomeView extends GetView<HomeController> {
                     ),
                     const Divider(color: Colors.white12, height: 1),
                     ListTile(
-                      leading: const Icon(Icons.create_new_folder, color: Colors.white70),
-                      title: const Text('Create New Folder & Move', style: TextStyle(color: Colors.white)),
+                      leading: const Icon(
+                        Icons.create_new_folder,
+                        color: Colors.white70,
+                      ),
+                      title: const Text(
+                        'Create New Folder & Move',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       onTap: () {
                         Get.back();
                         _showCreateAndMoveFolderDialog(pdf);
@@ -545,10 +593,19 @@ class HomeView extends GetView<HomeController> {
                             if (index == 0) {
                               final isHome = pdf.folderId.isEmpty;
                               return ListTile(
-                                leading: const Icon(Icons.home, color: Colors.white70),
-                                title: const Text('Home (Root)', style: TextStyle(color: Colors.white)),
+                                leading: const Icon(
+                                  Icons.home,
+                                  color: Colors.white70,
+                                ),
+                                title: const Text(
+                                  'Home (Root)',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                                 trailing: isHome
-                                    ? const Icon(Icons.check, color: Colors.white70)
+                                    ? const Icon(
+                                        Icons.check,
+                                        color: Colors.white70,
+                                      )
                                     : null,
                                 onTap: isHome
                                     ? null
@@ -565,9 +622,15 @@ class HomeView extends GetView<HomeController> {
                                 Icons.folder,
                                 color: Color(folder.colorValue ?? 0xFFFFB300),
                               ),
-                              title: Text(folder.name, style: const TextStyle(color: Colors.white)),
+                              title: Text(
+                                folder.name,
+                                style: const TextStyle(color: Colors.white),
+                              ),
                               trailing: isCurrent
-                                  ? const Icon(Icons.check, color: Colors.white70)
+                                  ? const Icon(
+                                      Icons.check,
+                                      color: Colors.white70,
+                                    )
                                   : null,
                               onTap: isCurrent
                                   ? null
@@ -600,8 +663,12 @@ class HomeView extends GetView<HomeController> {
         decoration: const InputDecoration(
           hintText: "Folder Name",
           hintStyle: TextStyle(color: Colors.white38),
-          enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white38)),
-          focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white38),
+          ),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white),
+          ),
         ),
       ),
       confirmText: "Create & Move",
@@ -639,16 +706,28 @@ class HomeView extends GetView<HomeController> {
               children: [
                 if (controller.currentFolderId.isEmpty)
                   ListTile(
-                    leading: const Icon(Icons.create_new_folder, color: Colors.white70),
-                    title: const Text('Create Folder', style: TextStyle(color: Colors.white)),
+                    leading: const Icon(
+                      Icons.create_new_folder,
+                      color: Colors.white70,
+                    ),
+                    title: const Text(
+                      'Create Folder',
+                      style: TextStyle(color: Colors.white),
+                    ),
                     onTap: () {
                       Get.back();
                       _showCreateFolderDialog();
                     },
                   ),
                 ListTile(
-                  leading: const Icon(Icons.picture_as_pdf, color: Colors.white70),
-                  title: const Text('Import PDF', style: TextStyle(color: Colors.white)),
+                  leading: const Icon(
+                    Icons.picture_as_pdf,
+                    color: Colors.white70,
+                  ),
+                  title: const Text(
+                    'Import PDF',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   onTap: () {
                     Get.back();
                     controller.importPdf();
@@ -702,21 +781,30 @@ class HomeView extends GetView<HomeController> {
                     decoration: const InputDecoration(
                       hintText: "Folder Name",
                       hintStyle: TextStyle(color: Colors.white38),
-                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white38)),
-                      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white38),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   const Text(
                     "Select Folder Color",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Obx(
                     () => Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: folderColors.map((colorVal) {
-                        final isSelected = controller.selectedColor.value == colorVal;
+                        final isSelected =
+                            controller.selectedColor.value == colorVal;
                         return GestureDetector(
                           onTap: () {
                             controller.selectedColor.value = colorVal;
@@ -728,20 +816,28 @@ class HomeView extends GetView<HomeController> {
                               shape: BoxShape.circle,
                               color: Color(colorVal),
                               border: Border.all(
-                                color: isSelected ? Colors.white : Colors.transparent,
+                                color: isSelected
+                                    ? Colors.white
+                                    : Colors.transparent,
                                 width: 2,
                               ),
                               boxShadow: [
                                 if (isSelected)
                                   BoxShadow(
-                                    color: Color(colorVal).withValues(alpha: 0.5),
+                                    color: Color(
+                                      colorVal,
+                                    ).withValues(alpha: 0.5),
                                     blurRadius: 6,
                                     spreadRadius: 1,
                                   ),
                               ],
                             ),
                             child: isSelected
-                                ? const Icon(Icons.check, size: 16, color: Colors.black)
+                                ? const Icon(
+                                    Icons.check,
+                                    size: 16,
+                                    color: Colors.black,
+                                  )
                                 : null,
                           ),
                         );
@@ -758,7 +854,10 @@ class HomeView extends GetView<HomeController> {
                           controller.selectedColor.value = 0xFFFFB300;
                           Get.back();
                         },
-                        child: const Text("Cancel", style: TextStyle(color: Colors.white70)),
+                        child: const Text(
+                          "Cancel",
+                          style: TextStyle(color: Colors.white70),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(

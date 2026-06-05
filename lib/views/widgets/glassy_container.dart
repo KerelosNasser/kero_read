@@ -26,7 +26,7 @@ class GlassyContainer extends StatelessWidget {
     this.boxShadow,
     this.width,
     this.height,
-    this.alignment,
+    this.alignment = Alignment.center,
   });
 
   @override
