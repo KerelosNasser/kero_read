@@ -17,7 +17,9 @@ class ReaderSearchBar extends StatelessWidget {
       ),
       color: Theme.of(context).colorScheme.surface,
       child: Container(
-        width: 320,
+        width: MediaQuery.of(context).size.width < 360
+            ? (MediaQuery.of(context).size.width - 32)
+            : 320.0,
         padding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 8,

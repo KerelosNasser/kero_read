@@ -235,18 +235,22 @@ class _ReaderViewState extends State<ReaderView> {
               child: controller.pageCount.value == 0
                   ? const SizedBox.shrink()
                   : GlassyContainer(
+                      width: 80,
+                      height: 32,
                       borderRadius: BorderRadius.circular(12),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 6,
                       ),
-                      child: Text(
-                        "${controller.currentPage.value} / ${controller.pageCount.value}",
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
+                      child: Center(
+                        child: Text(
+                          "${controller.currentPage.value} / ${controller.pageCount.value}",
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
                     ),
@@ -269,6 +273,8 @@ class _ReaderViewState extends State<ReaderView> {
           duration: const Duration(milliseconds: 300),
           opacity: controller.isAppBarVisible.value ? 1.0 : 0.0,
           child: GlassyContainer(
+            width: 56,
+            height: 56,
             borderRadius: BorderRadius.circular(28),
             child: SizedBox(
               width: 56,

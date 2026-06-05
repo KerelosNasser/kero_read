@@ -41,7 +41,12 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final double sheetWidth = MediaQuery.of(context).size.width;
+    final double sheetHeight = MediaQuery.of(context).size.height * 0.75;
+
     return GlassyContainer(
+      width: sheetWidth,
+      height: sheetHeight,
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(20),
         topRight: Radius.circular(20),

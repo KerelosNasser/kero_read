@@ -16,80 +16,164 @@ class ReaderAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double appBarWidth = screenWidth - 44; // matching Positioned left/right: 22
+
     return GlassyContainer(
+      width: appBarWidth,
+      height: 60.0,
       borderRadius: BorderRadius.circular(28),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
         height: 60.0,
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          toolbarHeight: 60.0, // Match container height to center elements perfectly
-          leadingWidth: 10,
-          titleSpacing: 0,
-          leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back,
-              size: 10,
-              color: Colors.white,
-            ),
-            onPressed: () => Navigator.maybePop(context),
-          ),
-          title: Text(
-            pdf.name,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.2,
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.search, size: 20, color: Colors.white),
-              tooltip: "Search Text",
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              constraints: const BoxConstraints(),
-              onPressed: () => controller.toggleSearchBar(),
-            ),
-            IconButton(
-              icon: const Icon(
-                Icons.document_scanner,
-                size: 20,
-                color: Colors.white,
-              ),
-              tooltip: "Scan PDF with OCR",
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              constraints: const BoxConstraints(),
-              onPressed: () => controller.performOcr(),
-            ),
-            IconButton(
-              icon: const Icon(
-                Icons.screen_rotation,
-                size: 20,
-                color: Colors.white,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              constraints: const BoxConstraints(),
-              onPressed: controller.toggleOrientation,
-            ),
-            Obx(
-              () => IconButton(
-                icon: Icon(
-                  controller.isDarkMode.value ? Icons.light_mode : Icons.dark_mode,
-                  size: 20,
-                  color: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        alignment: Alignment.center,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final double width = constraints.maxWidth;
+            final bool isNarrow = width < 450;
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Back Button
+                IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    size: 22,
+                    color: Colors.white,
+                  ),
+                  tooltip: "Back",
+                  onPressed: () => Navigator.maybePop(context),
+                  padding: const EdgeInsets.all(8),
+                  constraints: const BoxConstraints(),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                constraints: const BoxConstraints(),
-                onPressed: controller.toggleDarkMode,
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
+                const SizedBox(width: 8),
+                // Title (responsive font and truncation)
+                Expanded(
+                  child: Text(
+                    pdf.name,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isNarrow ? 14 : 15,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Actions
+                if (isNarrow) ...[
+                  // On narrow screen, show Search, Dark mode, and others in PopupMenu
+                  IconButton(
+                    icon: const Icon(Icons.search, size: 20, color: Colors.white),
+                    tooltip: "Search Text",
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                    onPressed: () => controller.toggleSearchBar(),
+                  ),
+                  const SizedBox(width: 4),
+                  Obx(
+                    () => IconButton(
+                      icon: Icon(
+                        controller.isDarkMode.value ? Icons.light_mode : Icons.dark_mode,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                      tooltip: "Toggle Theme",
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
+                      onPressed: controller.toggleDarkMode,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: Colors.white, size: 20),
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                    onSelected: (value) {
+                      if (value == 'ocr') {
+                        controller.performOcr();
+                      } else if (value == 'rotate') {
+                        controller.toggleOrientation();
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'ocr',
+                        child: Row(
+                          children: [
+                            Icon(Icons.document_scanner, size: 18),
+                            SizedBox(width: 8),
+                            Text("Scan PDF with OCR"),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'rotate',
+                        child: Row(
+                          children: [
+                            Icon(Icons.screen_rotation, size: 18),
+                            SizedBox(width: 8),
+                            Text("Rotate Screen"),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  // On wide screen, show all 4 inline
+                  IconButton(
+                    icon: const Icon(Icons.search, size: 20, color: Colors.white),
+                    tooltip: "Search Text",
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                    onPressed: () => controller.toggleSearchBar(),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.document_scanner,
+                      size: 20,
+                      color: Colors.white,
+                    ),
+                    tooltip: "Scan PDF with OCR",
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                    onPressed: () => controller.performOcr(),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.screen_rotation,
+                      size: 20,
+                      color: Colors.white,
+                    ),
+                    tooltip: "Rotate Screen",
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                    onPressed: controller.toggleOrientation,
+                  ),
+                  const SizedBox(width: 8),
+                  Obx(
+                    () => IconButton(
+                      icon: Icon(
+                        controller.isDarkMode.value ? Icons.light_mode : Icons.dark_mode,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                      tooltip: "Toggle Theme",
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
+                      onPressed: controller.toggleDarkMode,
+                    ),
+                  ),
+                ],
+                const SizedBox(width: 4),
+              ],
+            );
+          },
         ),
       ),
     );
