@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import '../../controllers/ai_controller.dart';
+import 'glassy_container.dart';
 
 class AiChatBottomSheet extends StatefulWidget {
   final String? initialQuestion;
@@ -41,96 +42,96 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
+    return GlassyContainer(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(20),
         topRight: Radius.circular(20),
       ),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          color: Colors.black.withValues(alpha: 0.75),
-          height: MediaQuery.of(context).size.height * 0.75,
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-            left: 16,
-            right: 16,
-            top: 10,
-          ),
-          child: Column(
-            children: [
-              // Handle bar
-              Container(
-                width: 40,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey[600],
-                  borderRadius: BorderRadius.circular(10),
+      blurX: 15.0,
+      blurY: 15.0,
+      color: Colors.black.withValues(alpha: 0.75),
+      border: Border.all(color: Colors.transparent),
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          left: 16,
+          right: 16,
+          top: 10,
+        ),
+        child: Column(
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.grey[600],
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.auto_awesome,
+                      color: Colors.tealAccent,
+                      size: 20,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      "Gemini AI Assistant",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(
-                        Icons.auto_awesome,
-                        color: Colors.tealAccent,
-                        size: 20,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        "Gemini AI Assistant",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 20),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const Divider(color: Colors.white24, height: 20),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const Divider(color: Colors.white24, height: 20),
 
-              // Chat Messages Area
-              Expanded(
-                child: Obx(() {
-                  if (aiController.messages.isEmpty) {
-                    return _buildEmptyState();
-                  }
+            // Chat Messages Area
+            Expanded(
+              child: Obx(() {
+                if (aiController.messages.isEmpty) {
+                  return _buildEmptyState();
+                }
 
-                  return ListView.builder(
-                    controller: aiController.scrollController,
-                    itemCount: aiController.messages.length,
-                    itemBuilder: (context, index) {
-                      final msg = aiController.messages[index];
-                      bool isUser = msg['role'] == 'user';
-                      return _buildMessageRow(msg, isUser);
-                    },
-                  );
-                }),
-              ),
+                return ListView.builder(
+                  controller: aiController.scrollController,
+                  itemCount: aiController.messages.length,
+                  itemBuilder: (context, index) {
+                    final msg = aiController.messages[index];
+                    bool isUser = msg['role'] == 'user';
+                    return _buildMessageRow(msg, isUser);
+                  },
+                );
+              }),
+            ),
 
-              // Loading indicator
-              Obx(
-                () => aiController.isLoading.value
-                    ? _buildLoadingIndicator()
-                    : const SizedBox.shrink(),
-              ),
+            // Loading indicator
+            Obx(
+              () => aiController.isLoading.value
+                  ? _buildLoadingIndicator()
+                  : const SizedBox.shrink(),
+            ),
 
-              const SizedBox(height: 8),
+            const SizedBox(height: 8),
 
-              // Input Box
-              Obx(
-                () => _buildInputBox(),
-              ),
-            ],
-          ),
+            // Input Box
+            Obx(
+              () => _buildInputBox(),
+            ),
+          ],
         ),
       ),
     );
