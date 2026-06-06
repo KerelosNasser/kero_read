@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:pdfrx/pdfrx.dart';
 import '../models/pdf_model.dart';
@@ -99,20 +100,31 @@ class _ReaderViewState extends State<ReaderView> {
               ),
               buttonItems: [
                 ContextMenuButtonItem(
-                  onPressed: () {
-                    params.textSelectionDelegate.copyTextSelection();
+                  onPressed: () async {
+                    final mappedText = controller.getMappedOcrText(
+                      params.a,
+                      params.b,
+                    );
+                    if (mappedText != null) {
+                      await Clipboard.setData(ClipboardData(text: mappedText));
+                    } else {
+                      params.textSelectionDelegate.copyTextSelection();
+                    }
                     params.textSelectionDelegate.clearTextSelection();
                   },
                   type: ContextMenuButtonType.copy,
                 ),
                 ContextMenuButtonItem(
                   onPressed: () async {
-                    final selectedText = await params.textSelectionDelegate.getSelectedText();
+                    final mappedText = controller.getMappedOcrText(
+                      params.a,
+                      params.b,
+                    ) ?? await params.textSelectionDelegate.getSelectedText();
                     params.textSelectionDelegate.clearTextSelection();
-                    if (selectedText.isNotEmpty && context.mounted) {
+                    if (mappedText.isNotEmpty && context.mounted) {
                       AiChatBottomSheet.show(
                         context,
-                        initialQuestion: 'Explain: "$selectedText"',
+                        initialQuestion: 'Explain: "$mappedText"',
                       );
                     }
                   },

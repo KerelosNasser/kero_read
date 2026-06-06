@@ -13,10 +13,12 @@ import 'package:path_provider/path_provider.dart';
 import '../models/pdf_model.dart';
 import '../services/ocr_service.dart';
 import '../controllers/ai_controller.dart';
+import '../models/ocr_result_model.dart';
 
 class ReaderController extends GetxController {
   var isDarkMode = false.obs;
   var isLandscape = false.obs;
+  final ocrResults = <int, OcrResult>{}.obs;
 
   late PdfModel currentPdf;
   late PdfViewerController pdfController;
@@ -225,7 +227,7 @@ class ReaderController extends GetxController {
 
       // 3. Call OCR service
       final ocrService = Get.find<OcrService>();
-      final String? result = await ocrService.performOcr(tempFile);
+      final OcrResult? result = await ocrService.performOcr(tempFile);
 
       // 4. Clean up temp file
       try {
@@ -238,8 +240,9 @@ class ReaderController extends GetxController {
       if (Get.isDialogOpen ?? false) Get.back();
 
       // 6. Set results
-      if (result != null && result.isNotEmpty) {
-        Get.find<AiController>().setPageContext(result);
+      if (result != null && result.text.isNotEmpty) {
+        ocrResults[currentPage.value] = result;
+        Get.find<AiController>().setPageContext(result.text);
         Get.snackbar(
           'OCR Success',
           'Text extracted and sent to AI context.',
@@ -269,6 +272,58 @@ class ReaderController extends GetxController {
         colorText: Colors.white,
       );
     }
+  }
+
+  String? getMappedOcrText(PdfTextSelectionAnchor? a, PdfTextSelectionAnchor? b) {
+    if (a == null || b == null) return null;
+    final pageNumber = a.page.pageNumber;
+    if (pageNumber != b.page.pageNumber) return null;
+
+    final ocrResult = ocrResults[pageNumber];
+    if (ocrResult == null) return null;
+
+    final start = a.index < b.index ? a.index : b.index;
+    final end = a.index < b.index ? b.index : a.index;
+
+    final pageText = a.page;
+    final selectedRects = <PdfRect>[];
+    for (int i = start; i <= end; i++) {
+      if (i >= 0 && i < pageText.charRects.length) {
+        selectedRects.add(pageText.charRects[i]);
+      }
+    }
+
+    if (selectedRects.isEmpty) return null;
+
+    final pdfPage = pdfController.document.pages[pageNumber - 1];
+    final pageHeight = pdfPage.height;
+
+    final matchedWords = <String>[];
+
+    for (final word in ocrResult.words) {
+      const scale = 1.5;
+      final pdfLeft = word.left / scale;
+      final pdfRight = (word.left + word.width) / scale;
+      final pdfTop = pageHeight - (word.top / scale);
+      final pdfBottom = pageHeight - ((word.top + word.height) / scale);
+
+      final wordRect = PdfRect(pdfLeft, pdfTop, pdfRight, pdfBottom);
+
+      bool overlapsSelection = false;
+      for (final charRect in selectedRects) {
+        if (wordRect.overlaps(charRect)) {
+          overlapsSelection = true;
+          break;
+        }
+      }
+
+      if (overlapsSelection) {
+        matchedWords.add(word.text);
+      }
+    }
+
+    if (matchedWords.isEmpty) return null;
+    return matchedWords.join(' ');
   }
 
   Future<sync_pdf.PdfDocument?> _getOrInitSyncDoc() async {
