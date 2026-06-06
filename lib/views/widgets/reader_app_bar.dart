@@ -8,16 +8,13 @@ class ReaderAppBar extends StatelessWidget {
   final PdfModel pdf;
   final ReaderController controller;
 
-  const ReaderAppBar({
-    super.key,
-    required this.pdf,
-    required this.controller,
-  });
+  const ReaderAppBar({super.key, required this.pdf, required this.controller});
 
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double appBarWidth = screenWidth - 44; // matching Positioned left/right: 22
+    final double appBarWidth =
+        screenWidth - 44; // matching Positioned left/right: 22
 
     return GlassyContainer(
       width: appBarWidth,
@@ -67,7 +64,11 @@ class ReaderAppBar extends StatelessWidget {
                 if (isNarrow) ...[
                   // On narrow screen, show Search, Dark mode, and others in PopupMenu
                   IconButton(
-                    icon: const Icon(Icons.search, size: 20, color: Colors.white),
+                    icon: const Icon(
+                      Icons.search,
+                      size: 20,
+                      color: Colors.white,
+                    ),
                     tooltip: "Search Text",
                     padding: const EdgeInsets.all(8),
                     constraints: const BoxConstraints(),
@@ -77,7 +78,9 @@ class ReaderAppBar extends StatelessWidget {
                   Obx(
                     () => IconButton(
                       icon: Icon(
-                        controller.isDarkMode.value ? Icons.light_mode : Icons.dark_mode,
+                        controller.isDarkMode.value
+                            ? Icons.light_mode
+                            : Icons.dark_mode,
                         size: 20,
                         color: Colors.white,
                       ),
@@ -90,9 +93,12 @@ class ReaderAppBar extends StatelessWidget {
                   const SizedBox(width: 4),
                   _buildPopupMenu(context, isNarrow: true),
                 ] else ...[
-                  // On wide screen, show all inline with 3dots for Fit Width and Save
                   IconButton(
-                    icon: const Icon(Icons.search, size: 20, color: Colors.white),
+                    icon: const Icon(
+                      Icons.search,
+                      size: 20,
+                      color: Colors.white,
+                    ),
                     tooltip: "Search Text",
                     padding: const EdgeInsets.all(8),
                     constraints: const BoxConstraints(),
@@ -126,7 +132,9 @@ class ReaderAppBar extends StatelessWidget {
                   Obx(
                     () => IconButton(
                       icon: Icon(
-                        controller.isDarkMode.value ? Icons.light_mode : Icons.dark_mode,
+                        controller.isDarkMode.value
+                            ? Icons.light_mode
+                            : Icons.dark_mode,
                         size: 20,
                         color: Colors.white,
                       ),
@@ -154,7 +162,9 @@ class ReaderAppBar extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       constraints: const BoxConstraints(),
       offset: const Offset(0, 40),
-      color: Colors.white.withValues(alpha: 0.12), // translucent white glassy style
+      color: Colors.white.withValues(
+        alpha: 0.12,
+      ), // translucent white glassy style
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(

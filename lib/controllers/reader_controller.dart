@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart' as sync_pdf;
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/pdf_model.dart';
 import '../services/ocr_service.dart';
 import '../controllers/ai_controller.dart';
@@ -201,13 +202,72 @@ class ReaderController extends GetxController {
       const Center(child: CircularProgressIndicator()),
       barrierDismissible: false,
     );
-    final ocrService = Get.find<OcrService>();
-    String? result = await ocrService.performOcr(File(currentPdf.path));
-    Get.back(); // close loading
 
-    if (result != null && result.isNotEmpty) {
-      Get.find<AiController>().setPageContext(result);
-      Get.snackbar('OCR Success', 'Text extracted and sent to AI context.');
+    try {
+      // 1. Render the current page as an image
+      final Uint8List? imageBytes = await renderCurrentPageAsImage();
+      if (imageBytes == null) {
+        if (Get.isDialogOpen ?? false) Get.back();
+        Get.snackbar(
+          'OCR Error',
+          'Failed to render current page as image.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // 2. Save imageBytes to a temp file
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/ocr_page.png');
+      await tempFile.writeAsBytes(imageBytes);
+
+      // 3. Call OCR service
+      final ocrService = Get.find<OcrService>();
+      final String? result = await ocrService.performOcr(tempFile);
+
+      // 4. Clean up temp file
+      try {
+        if (await tempFile.exists()) {
+          await tempFile.delete();
+        }
+      } catch (_) {}
+
+      // 5. Close loading dialog safely
+      if (Get.isDialogOpen ?? false) Get.back();
+
+      // 6. Set results
+      if (result != null && result.isNotEmpty) {
+        Get.find<AiController>().setPageContext(result);
+        Get.snackbar(
+          'OCR Success',
+          'Text extracted and sent to AI context.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      } else {
+        Get.snackbar(
+          'OCR Error',
+          'No text extracted from current page.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      // Close loading dialog safely
+      if (Get.isDialogOpen ?? false) Get.back();
+
+      if (kDebugMode) debugPrint("OCR Error: $e");
+      Get.snackbar(
+        'OCR Error',
+        'Failed to perform OCR: ${e.toString().replaceAll('Exception: ', '')}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
     }
   }
 
