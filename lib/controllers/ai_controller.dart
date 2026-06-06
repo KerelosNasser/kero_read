@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../services/ai_service.dart';
@@ -89,7 +89,7 @@ class AiController extends GetxController {
         final readerController = Get.find<ReaderController>();
         imageBytes = await readerController.renderCurrentPageAsImage();
       } catch (e) {
-        debugPrint('Could not render page image: $e');
+        if (kDebugMode) debugPrint('Could not render page image: $e');
       }
 
       final int aiMsgIndex = messages.length;

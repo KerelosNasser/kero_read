@@ -31,7 +31,7 @@ class AiService extends GetxService {
 
   void _initModel(String modelName) {
     _currentModel = modelName;
-    debugPrint("Initializing Gemini model: $_currentModel");
+    if (kDebugMode) debugPrint("Initializing Gemini model: $_currentModel");
     _model = GenerativeModel(model: _currentModel, apiKey: _apiKey);
     _chat = _model.startChat();
   }
@@ -75,19 +75,19 @@ class AiService extends GetxService {
         var response = await _chat.sendMessage(content);
         return response.text ?? 'No response';
       } catch (e) {
-        debugPrint("Error sending with $_currentModel: $e");
+        if (kDebugMode) debugPrint("Error sending with $_currentModel: $e");
 
         // If current model fails, iterate through fallback list to find a working model
         for (String modelName in _fallbackModels) {
           if (modelName == _currentModel) continue;
 
           try {
-            debugPrint("Falling back to model: $modelName");
+            if (kDebugMode) debugPrint("Falling back to model: $modelName");
             _initModel(modelName);
             var response = await _chat.sendMessage(content);
             return response.text ?? 'No response';
           } catch (fallbackErr) {
-            debugPrint("Fallback model $modelName failed: $fallbackErr");
+            if (kDebugMode) debugPrint("Fallback model $modelName failed: $fallbackErr");
           }
         }
 
@@ -112,7 +112,7 @@ class AiService extends GetxService {
           }
         }
       } catch (e) {
-        debugPrint("Error sending stream with $_currentModel: $e");
+        if (kDebugMode) debugPrint("Error sending stream with $_currentModel: $e");
         
         bool success = false;
         // If current model fails, iterate through fallback list to find a working model
@@ -120,7 +120,7 @@ class AiService extends GetxService {
           if (modelName == _currentModel) continue;
           
           try {
-            debugPrint("Falling back to model for streaming: $modelName");
+            if (kDebugMode) debugPrint("Falling back to model for streaming: $modelName");
             _initModel(modelName);
             final responseStream = _chat.sendMessageStream(content);
             await for (final response in responseStream) {
@@ -131,7 +131,7 @@ class AiService extends GetxService {
             success = true;
             break;
           } catch (fallbackErr) {
-            debugPrint("Fallback model $modelName failed during stream: $fallbackErr");
+            if (kDebugMode) debugPrint("Fallback model $modelName failed during stream: $fallbackErr");
           }
         }
         

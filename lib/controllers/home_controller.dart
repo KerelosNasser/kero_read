@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
@@ -77,7 +78,7 @@ class HomeController extends GetxController {
         try {
           await file.delete();
         } catch (e) {
-          debugPrint("Failed to delete duplicate cache file: $e");
+          if (kDebugMode) debugPrint("Failed to delete duplicate cache file: $e");
         }
       }
       Get.to(() => ReaderView(pdf: existingPdf!));
@@ -97,7 +98,7 @@ class HomeController extends GetxController {
         } catch (_) {}
       }
     } catch (e) {
-      debugPrint("Error copying external PDF: $e");
+      if (kDebugMode) debugPrint("Error copying external PDF: $e");
     }
 
     final pdf = PdfModel(
@@ -209,7 +210,7 @@ class HomeController extends GetxController {
         final tempFile = File(tempPath);
         await tempFile.copy(permanentPath);
       } catch (e) {
-        debugPrint("Error copying imported PDF: $e");
+        if (kDebugMode) debugPrint("Error copying imported PDF: $e");
         Get.snackbar('Import Error', 'Failed to copy PDF to permanent storage.');
         return;
       }
@@ -238,7 +239,7 @@ class HomeController extends GetxController {
           await file.delete();
         }
       } catch (e) {
-        debugPrint("Error deleting PDF file: $e");
+        if (kDebugMode) debugPrint("Error deleting PDF file: $e");
       }
       await _storage.pdfBox.delete(id);
       _pdfsByFolder[pdf.folderId]?.removeWhere((p) => p.id == id);

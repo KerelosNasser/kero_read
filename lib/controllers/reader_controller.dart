@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
@@ -166,7 +167,7 @@ class ReaderController extends GetxController {
           _cachedSyncDoc = sync_pdf.PdfDocument(inputBytes: bytes);
         }
       } catch (e) {
-        debugPrint("Error initializing sync PDF document: $e");
+        if (kDebugMode) debugPrint("Error initializing sync PDF document: $e");
         _initSyncDocFuture = null; // Allow retry on failure
       }
     }();
@@ -189,7 +190,7 @@ class ReaderController extends GetxController {
           Get.find<AiController>().setPageContext(text);
         }
       } catch (e) {
-        debugPrint('Error extracting text: $e');
+        if (kDebugMode) debugPrint('Error extracting text: $e');
       }
     });
   }
@@ -240,12 +241,13 @@ class ReaderController extends GetxController {
 
       final ui.Image uiImage = await pageImage.createImage();
       final byteData = await uiImage.toByteData(format: ui.ImageByteFormat.png);
+      uiImage.dispose(); // ← dispose native handle immediately after byte extraction
       pageImage.dispose();
 
       if (byteData == null) return null;
       return byteData.buffer.asUint8List();
     } catch (e) {
-      debugPrint("Error rendering current page: $e");
+      if (kDebugMode) debugPrint("Error rendering current page: $e");
       return null;
     }
   }

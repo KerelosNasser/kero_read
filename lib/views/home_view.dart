@@ -417,8 +417,12 @@ class HomeView extends GetView<HomeController> {
       onConfirm: () {
         controller.renameFolder(folder.id, renameController.text);
         Get.back();
+        renameController.dispose();
       },
-      onCancel: () => Get.back(),
+      onCancel: () {
+        Get.back();
+        renameController.dispose();
+      },
     );
   }
 
@@ -535,8 +539,12 @@ class HomeView extends GetView<HomeController> {
       onConfirm: () {
         controller.renamePdf(pdf.id, renameController.text);
         Get.back();
+        renameController.dispose();
       },
-      onCancel: () => Get.back(),
+      onCancel: () {
+        Get.back();
+        renameController.dispose();
+      },
     );
   }
 
@@ -685,8 +693,12 @@ class HomeView extends GetView<HomeController> {
           }
         }
         Get.back();
+        folderController.dispose();
       },
-      onCancel: () => Get.back(),
+      onCancel: () {
+        Get.back();
+        folderController.dispose();
+      },
     );
   }
 

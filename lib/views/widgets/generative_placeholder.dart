@@ -54,6 +54,53 @@ class _GenerativePlaceholderState extends State<GenerativePlaceholder>
 
   @override
   Widget build(BuildContext context) {
+    // Static child built once; AnimatedBuilder reuses it without rebuilding.
+    final child = Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.04),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  width: 1,
+                ),
+              ),
+              child: const Icon(
+                Icons.library_books_outlined,
+                size: 48,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              widget.title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              widget.subtitle,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade400,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+
     return GestureDetector(
       onPanUpdate: (details) {
         final box = context.findRenderObject() as RenderBox?;
@@ -83,6 +130,7 @@ class _GenerativePlaceholderState extends State<GenerativePlaceholder>
       },
       child: AnimatedBuilder(
         animation: _controller,
+        child: child, // static subtree passed once, reused every frame
         builder: (context, child) {
           return CustomPaint(
             painter: ParticlePainter(
@@ -90,52 +138,7 @@ class _GenerativePlaceholderState extends State<GenerativePlaceholder>
               animationValue: _controller.value,
               touchPosition: _touchPosition,
             ),
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // A glowing circular frame representing the empty state
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.04),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          width: 1,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.library_books_outlined,
-                        size: 48,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      widget.title,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      widget.subtitle,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade400,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            child: child,
           );
         },
       ),
@@ -228,7 +231,8 @@ class ParticlePainter extends CustomPainter {
 
       canvas.drawCircle(Offset(p1X, p1Y), p1.radius, glowPaint);
 
-      // Web connections - O(P^2) but with small P (35) it is extremely fast and performant.
+      // Web connections — squared-distance early-exit avoids sqrt() for most particle pairs.
+      const double kConnectDistSq = 100.0 * 100.0; // 10000
       for (int j = i + 1; j < particles.length; j++) {
         final p2 = particles[j];
         final p2X = p2.x * size.width;
@@ -236,10 +240,11 @@ class ParticlePainter extends CustomPainter {
 
         final double dx = p1X - p2X;
         final double dy = p1Y - p2Y;
-        final double dist = math.sqrt(dx * dx + dy * dy);
+        final double distSq = dx * dx + dy * dy;
 
-        if (dist < 100) {
-          // Fade connection line based on distance
+        if (distSq < kConnectDistSq) {
+          // Only compute sqrt when we know the connection is visible
+          final double dist = math.sqrt(distSq);
           final double opacity = (1.0 - (dist / 100)) * 0.15;
           paint.color = Colors.white.withValues(alpha: opacity);
           canvas.drawLine(Offset(p1X, p1Y), Offset(p2X, p2Y), paint);
@@ -249,5 +254,9 @@ class ParticlePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant ParticlePainter oldDelegate) => true;
+  bool shouldRepaint(covariant ParticlePainter oldDelegate) {
+    // Skip repaint when animation hasn't advanced and touch hasn't changed
+    return animationValue != oldDelegate.animationValue ||
+        touchPosition != oldDelegate.touchPosition;
+  }
 }

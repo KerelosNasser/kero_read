@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -20,6 +21,7 @@ class ReaderView extends StatefulWidget {
 
 class _ReaderViewState extends State<ReaderView> {
   late final ReaderController controller;
+  late final Widget _pdfViewerWidget; // Cached to survive dark mode rebuilds
 
   static const List<double> _invertMatrix = [
     -1, 0, 0, 0, 255,
@@ -41,6 +43,9 @@ class _ReaderViewState extends State<ReaderView> {
     controller = Get.put(ReaderController());
     controller.setPdf(widget.pdf);
     Get.put(AiController());
+    // Build PdfViewer once and cache — prevents native PDFium element tree
+    // from being reconstructed on every dark-mode toggle.
+    _pdfViewerWidget = _buildPdfViewer();
   }
 
   @override
@@ -133,14 +138,16 @@ class _ReaderViewState extends State<ReaderView> {
           }
         },
         onViewerReady: (document, pdfController) {
-          debugPrint(
-            "onViewerReady: Document loaded successfully. Page count: ${document.pages.length}",
-          );
+          if (kDebugMode) {
+            debugPrint(
+              "onViewerReady: Document loaded successfully. Page count: ${document.pages.length}",
+            );
+          }
           controller.pageCount.value = document.pages.length;
           controller.initTextSearcher();
         },
         errorBannerBuilder: (context, error, stackTrace, documentRef) {
-          debugPrint("errorBannerBuilder: Error loading PDF: $error");
+          if (kDebugMode) debugPrint("errorBannerBuilder: Error loading PDF: $error");
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(32.0),
@@ -168,7 +175,7 @@ class _ReaderViewState extends State<ReaderView> {
             colorFilter: controller.isDarkMode.value
                 ? const ColorFilter.matrix(_invertMatrix)
                 : const ColorFilter.matrix(_identityMatrix),
-            child: _buildPdfViewer(),
+            child: _pdfViewerWidget, // Use cached instance — no PDFium reinit
           );
         }),
       ),
