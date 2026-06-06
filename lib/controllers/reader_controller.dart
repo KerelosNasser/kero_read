@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart' as sync_pdf;
+import 'package:file_picker/file_picker.dart';
 import '../models/pdf_model.dart';
 import '../services/ocr_service.dart';
 import '../controllers/ai_controller.dart';
@@ -133,6 +134,60 @@ class ReaderController extends GetxController {
         DeviceOrientation.portraitUp,
         DeviceOrientation.portraitDown,
       ]);
+    }
+  }
+
+  void fitPageWidth() {
+    if (pdfController.isReady) {
+      final matrix = pdfController.calcMatrixFitWidthForPage(pageNumber: currentPage.value);
+      if (matrix != null) {
+        pdfController.goTo(matrix);
+      }
+    }
+  }
+
+  Future<void> savePdf() async {
+    try {
+      final file = File(currentPdf.path);
+      if (!await file.exists()) {
+        Get.snackbar(
+          'Error',
+          'PDF file not found.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      final bytes = await file.readAsBytes();
+      final String? outputFile = await FilePicker.saveFile(
+        dialogTitle: 'Save PDF As:',
+        fileName: currentPdf.name,
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (outputFile != null) {
+        final newFile = File(outputFile);
+        await newFile.writeAsBytes(bytes);
+        Get.snackbar(
+          'Success',
+          'PDF saved successfully.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint("Error saving PDF: $e");
+      Get.snackbar(
+        'Error',
+        'Failed to save PDF: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
     }
   }
 

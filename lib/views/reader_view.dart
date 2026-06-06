@@ -145,6 +145,22 @@ class _ReaderViewState extends State<ReaderView> {
           }
           controller.pageCount.value = document.pages.length;
           controller.initTextSearcher();
+          // Fit page width automatically on ready
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (controller.pdfController.isReady) {
+              controller.fitPageWidth();
+            }
+          });
+        },
+        onViewSizeChanged: (viewSize, oldViewSize, pdfController) {
+          if (oldViewSize != null) {
+            // Re-fit page width on size change (e.g. rotation)
+            Future.delayed(const Duration(milliseconds: 150), () {
+              if (controller.pdfController.isReady) {
+                controller.fitPageWidth();
+              }
+            });
+          }
         },
         errorBannerBuilder: (context, error, stackTrace, documentRef) {
           if (kDebugMode) debugPrint("errorBannerBuilder: Error loading PDF: $error");

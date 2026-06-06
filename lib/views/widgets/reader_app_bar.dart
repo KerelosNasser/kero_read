@@ -88,42 +88,9 @@ class ReaderAppBar extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, color: Colors.white, size: 20),
-                    padding: const EdgeInsets.all(8),
-                    constraints: const BoxConstraints(),
-                    onSelected: (value) {
-                      if (value == 'ocr') {
-                        controller.performOcr();
-                      } else if (value == 'rotate') {
-                        controller.toggleOrientation();
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'ocr',
-                        child: Row(
-                          children: [
-                            Icon(Icons.document_scanner, size: 18),
-                            SizedBox(width: 8),
-                            Text("Scan PDF with OCR"),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'rotate',
-                        child: Row(
-                          children: [
-                            Icon(Icons.screen_rotation, size: 18),
-                            SizedBox(width: 8),
-                            Text("Rotate Screen"),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildPopupMenu(context, isNarrow: true),
                 ] else ...[
-                  // On wide screen, show all 4 inline
+                  // On wide screen, show all inline with 3dots for Fit Width and Save
                   IconButton(
                     icon: const Icon(Icons.search, size: 20, color: Colors.white),
                     tooltip: "Search Text",
@@ -169,6 +136,8 @@ class ReaderAppBar extends StatelessWidget {
                       onPressed: controller.toggleDarkMode,
                     ),
                   ),
+                  const SizedBox(width: 4),
+                  _buildPopupMenu(context, isNarrow: false),
                 ],
                 const SizedBox(width: 4),
               ],
@@ -176,6 +145,90 @@ class ReaderAppBar extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildPopupMenu(BuildContext context, {required bool isNarrow}) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert, color: Colors.white, size: 20),
+      padding: const EdgeInsets.all(8),
+      constraints: const BoxConstraints(),
+      offset: const Offset(0, 40),
+      color: Colors.white.withValues(alpha: 0.12), // translucent white glassy style
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: Colors.white.withValues(alpha: 0.15),
+          width: 1.0,
+        ),
+      ),
+      onSelected: (value) {
+        if (value == 'fit') {
+          controller.fitPageWidth();
+        } else if (value == 'save') {
+          controller.savePdf();
+        } else if (value == 'ocr') {
+          controller.performOcr();
+        } else if (value == 'rotate') {
+          controller.toggleOrientation();
+        }
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem<String>(
+          value: 'fit',
+          child: Row(
+            children: [
+              Icon(Icons.fit_screen, size: 18, color: Colors.white70),
+              SizedBox(width: 8),
+              Text(
+                "Fit Page Width",
+                style: TextStyle(color: Colors.white, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'save',
+          child: Row(
+            children: [
+              Icon(Icons.save, size: 18, color: Colors.white70),
+              SizedBox(width: 8),
+              Text(
+                "Save PDF As",
+                style: TextStyle(color: Colors.white, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+        if (isNarrow) ...[
+          const PopupMenuItem<String>(
+            value: 'ocr',
+            child: Row(
+              children: [
+                Icon(Icons.document_scanner, size: 18, color: Colors.white70),
+                SizedBox(width: 8),
+                Text(
+                  "Scan PDF with OCR",
+                  style: TextStyle(color: Colors.white, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          const PopupMenuItem<String>(
+            value: 'rotate',
+            child: Row(
+              children: [
+                Icon(Icons.screen_rotation, size: 18, color: Colors.white70),
+                SizedBox(width: 8),
+                Text(
+                  "Rotate Screen",
+                  style: TextStyle(color: Colors.white, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

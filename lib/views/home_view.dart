@@ -261,8 +261,11 @@ class HomeView extends GetView<HomeController> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         final double sheetWidth = MediaQuery.of(context).size.width;
+        final double bottomPadding = MediaQuery.of(context).padding.bottom;
+        final double sheetHeight = 252.0 + bottomPadding;
         return GlassyContainer(
           width: sheetWidth,
+          height: sheetHeight,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
@@ -432,8 +435,11 @@ class HomeView extends GetView<HomeController> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         final double sheetWidth = MediaQuery.of(context).size.width;
+        final double bottomPadding = MediaQuery.of(context).padding.bottom;
+        final double sheetHeight = 222.0 + bottomPadding;
         return GlassyContainer(
           width: sheetWidth,
+          height: sheetHeight,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
@@ -708,8 +714,12 @@ class HomeView extends GetView<HomeController> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         final double sheetWidth = MediaQuery.of(context).size.width;
+        final double bottomPadding = MediaQuery.of(context).padding.bottom;
+        final double sheetHeight =
+            (controller.currentFolderId.isEmpty ? 133.0 : 77.0) + bottomPadding;
         return GlassyContainer(
           width: sheetWidth,
+          height: sheetHeight,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
