@@ -54,7 +54,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
       snapSizes: const [0.55, 0.75, 0.92],
       builder: (context, scrollController) {
         return GlassyContainer(
-          width: double.infinity,
+          width: MediaQuery.of(context).size.width,
           height: screenHeight * 0.92, // max possible — DraggableScrollableSheet clips it
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(20),

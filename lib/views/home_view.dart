@@ -7,6 +7,16 @@ import 'reader_view.dart';
 import 'widgets/generative_placeholder.dart';
 import 'widgets/glassy_container.dart';
 
+/// Shared palette — defined once, referenced everywhere (avoids rebuilding on each gesture).
+const List<int> _kFolderColors = [
+  0xFFFFB300, // Amber
+  0xFF00BFA5, // Teal
+  0xFF29B6F6, // Blue
+  0xFFFF5252, // Coral
+  0xFFAB47BC, // Purple
+  0xFF66BB6A, // Green
+];
+
 class HomeView extends GetView<HomeController> {
   HomeView({super.key}) {
     Get.put(HomeController());
@@ -185,55 +195,58 @@ class HomeView extends GetView<HomeController> {
   }) {
     Get.dialog(
       Center(
-        child: GlassyContainer(
-          width: 320,
-          borderRadius: BorderRadius.circular(24),
-          color: Colors.white.withValues(alpha: 0.1),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Material(
-              color: Colors.transparent,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  content,
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: onCancel,
-                        child: const Text(
-                          "Cancel",
-                          style: TextStyle(color: Colors.white70),
-                        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 320),
+          child: GlassyContainer(
+            borderRadius: BorderRadius.circular(24),
+            color: Colors.white.withValues(alpha: 0.1),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Material(
+                color: Colors.transparent,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Colors.white,
                       ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: onConfirm,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha: 0.15),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    ),
+                    const SizedBox(height: 12),
+                    content,
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: onCancel,
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(color: Colors.white70),
                           ),
                         ),
-                        child: Text(confirmText),
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: onConfirm,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.15),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(confirmText),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -243,15 +256,6 @@ class HomeView extends GetView<HomeController> {
   }
 
   void _showFolderOptions(BuildContext context, FolderModel folder) {
-    final List<int> folderColors = [
-      0xFFFFB300, // Amber
-      0xFF00BFA5, // Teal
-      0xFF29B6F6, // Blue
-      0xFFFF5252, // Coral
-      0xFFAB47BC, // Purple
-      0xFF66BB6A, // Green
-    ];
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -265,121 +269,126 @@ class HomeView extends GetView<HomeController> {
           ),
           color: Colors.white.withValues(alpha: 0.08),
           border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    folder.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.white,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              const Padding(
+                padding: EdgeInsets.only(top: 10, bottom: 6),
+                child: _DragHandle(),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                child: Text(
+                  folder.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Divider(color: Colors.white12, height: 1),
+              // Color Selector Row
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10.0,
+                  horizontal: 16.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Folder Color",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.white70,
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const Divider(color: Colors.white12, height: 1),
-                // Color Selector Row
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12.0,
-                    horizontal: 16.0,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Folder Color",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: Colors.white70,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: folderColors.map((colorVal) {
-                          final isCurrent =
-                              folder.colorValue == colorVal ||
-                              (folder.colorValue == null &&
-                                  colorVal == 0xFFFFB300);
-                          return GestureDetector(
-                            onTap: () {
-                              controller.updateFolderColor(folder.id, colorVal);
-                              Get.back();
-                            },
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Color(colorVal),
-                                border: Border.all(
-                                  color: isCurrent
-                                      ? Colors.white
-                                      : Colors.transparent,
-                                  width: 2,
-                                ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: _kFolderColors.map((colorVal) {
+                        final isCurrent =
+                            folder.colorValue == colorVal ||
+                            (folder.colorValue == null &&
+                                colorVal == 0xFFFFB300);
+                        return GestureDetector(
+                          onTap: () {
+                            controller.updateFolderColor(folder.id, colorVal);
+                            Get.back();
+                          },
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(colorVal),
+                              border: Border.all(
+                                color: isCurrent
+                                    ? Colors.white
+                                    : Colors.transparent,
+                                width: 2,
                               ),
-                              child: isCurrent
-                                  ? const Icon(
-                                      Icons.check,
-                                      size: 18,
-                                      color: Colors.black,
-                                    )
-                                  : null,
                             ),
-                          );
-                        }).toList(),
+                            child: isCurrent
+                                ? const Icon(
+                                    Icons.check,
+                                    size: 18,
+                                    color: Colors.black,
+                                  )
+                                : null,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(color: Colors.white12, height: 1),
+              ListTile(
+                leading: const Icon(Icons.edit, color: Colors.white70),
+                title: const Text(
+                  'Rename Folder',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Get.back();
+                  _showRenameFolderDialog(folder);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.redAccent),
+                title: const Text(
+                  'Delete Folder',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+                onTap: () {
+                  Get.back();
+                  _showGlassyDialog(
+                    title: "Delete Folder?",
+                    content: const Center(
+                      child: Text(
+                        "This will delete all PDFs inside.",
+                        style: TextStyle(color: Colors.white70),
+                        textAlign: TextAlign.center,
                       ),
-                    ],
-                  ),
-                ),
-                const Divider(color: Colors.white12, height: 1),
-                ListTile(
-                  leading: const Icon(Icons.edit, color: Colors.white70),
-                  title: const Text(
-                    'Rename Folder',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  onTap: () {
-                    Get.back();
-                    _showRenameFolderDialog(folder);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.delete, color: Colors.redAccent),
-                  title: const Text(
-                    'Delete Folder',
-                    style: TextStyle(color: Colors.redAccent),
-                  ),
-                  onTap: () {
-                    Get.back();
-                    _showGlassyDialog(
-                      title: "Delete Folder?",
-                      content: const Center(
-                        child: Text(
-                          "This will delete all PDFs inside.",
-                          style: TextStyle(color: Colors.white70),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      confirmText: "Delete",
-                      onConfirm: () {
-                        controller.deleteFolder(folder.id);
-                        Get.back();
-                      },
-                      onCancel: () => Get.back(),
-                    );
-                  },
-                ),
-              ],
-            ),
+                    ),
+                    confirmText: "Delete",
+                    onConfirm: () {
+                      controller.deleteFolder(folder.id);
+                      Get.back();
+                    },
+                    onCancel: () => Get.back(),
+                  );
+                },
+              ),
+              // Bottom safe area padding
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ],
           ),
         );
       },
@@ -427,77 +436,77 @@ class HomeView extends GetView<HomeController> {
           ),
           color: Colors.white.withValues(alpha: 0.08),
           border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    pdf.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.white,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 10, bottom: 6),
+                child: _DragHandle(),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                child: Text(
+                  pdf.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.white,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const Divider(color: Colors.white12, height: 1),
-                ListTile(
-                  leading: const Icon(
-                    Icons.drive_file_move,
-                    color: Colors.white70,
-                  ),
-                  title: const Text(
-                    'Move to Folder',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  onTap: () {
-                    Get.back();
-                    _showMovePdfSheet(context, pdf);
-                  },
+              ),
+              const Divider(color: Colors.white12, height: 1),
+              ListTile(
+                leading: const Icon(Icons.drive_file_move, color: Colors.white70),
+                title: const Text(
+                  'Move to Folder',
+                  style: TextStyle(color: Colors.white),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.edit, color: Colors.white70),
-                  title: const Text(
-                    'Rename PDF',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  onTap: () {
-                    Get.back();
-                    _showRenamePdfDialog(pdf);
-                  },
+                onTap: () {
+                  Get.back();
+                  _showMovePdfSheet(context, pdf);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit, color: Colors.white70),
+                title: const Text(
+                  'Rename PDF',
+                  style: TextStyle(color: Colors.white),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.delete, color: Colors.redAccent),
-                  title: const Text(
-                    'Delete PDF',
-                    style: TextStyle(color: Colors.redAccent),
-                  ),
-                  onTap: () {
-                    Get.back();
-                    _showGlassyDialog(
-                      title: "Delete PDF?",
-                      content: const Center(
-                        child: Text(
-                          "Are you sure you want to delete this PDF?",
-                          style: TextStyle(color: Colors.white70),
-                          textAlign: TextAlign.center,
-                        ),
+                onTap: () {
+                  Get.back();
+                  _showRenamePdfDialog(pdf);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.redAccent),
+                title: const Text(
+                  'Delete PDF',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+                onTap: () {
+                  Get.back();
+                  _showGlassyDialog(
+                    title: "Delete PDF?",
+                    content: const Center(
+                      child: Text(
+                        "Are you sure you want to delete this PDF?",
+                        style: TextStyle(color: Colors.white70),
+                        textAlign: TextAlign.center,
                       ),
-                      confirmText: "Delete",
-                      onConfirm: () {
-                        controller.deletePdf(pdf.id);
-                        Get.back();
-                      },
-                      onCancel: () => Get.back(),
-                    );
-                  },
-                ),
-              ],
-            ),
+                    ),
+                    confirmText: "Delete",
+                    onConfirm: () {
+                      controller.deletePdf(pdf.id);
+                      Get.back();
+                    },
+                    onCancel: () => Get.back(),
+                  );
+                },
+              ),
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ],
           ),
         );
       },
@@ -532,13 +541,18 @@ class HomeView extends GetView<HomeController> {
   }
 
   void _showMovePdfSheet(BuildContext context, PdfModel pdf) {
+    // Cap height: header (~110) + items (56 each), capped at 60% screen max
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final int folderCount = controller.folders.length;
+    final double contentHeight = 110 + (folderCount + 2) * 56.0;
+    final double sheetHeight = contentHeight.clamp(200.0, screenHeight * 0.6);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         final double sheetWidth = MediaQuery.of(context).size.width;
-        final double sheetHeight = MediaQuery.of(context).size.height * 0.6;
         return GlassyContainer(
           width: sheetWidth,
           height: sheetHeight,
@@ -554,97 +568,87 @@ class HomeView extends GetView<HomeController> {
             maxChildSize: 1.0,
             expand: false,
             builder: (context, scrollController) {
-              return SafeArea(
-                child: Column(
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Text(
-                        'Move to Folder',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: Colors.white,
-                        ),
+              return Column(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 10, bottom: 6),
+                    child: _DragHandle(),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                    child: Text(
+                      'Move to Folder',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Colors.white,
                       ),
                     ),
-                    const Divider(color: Colors.white12, height: 1),
-                    ListTile(
-                      leading: const Icon(
-                        Icons.create_new_folder,
-                        color: Colors.white70,
-                      ),
-                      title: const Text(
-                        'Create New Folder & Move',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      onTap: () {
-                        Get.back();
-                        _showCreateAndMoveFolderDialog(pdf);
-                      },
+                  ),
+                  const Divider(color: Colors.white12, height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.create_new_folder, color: Colors.white70),
+                    title: const Text(
+                      'Create New Folder & Move',
+                      style: TextStyle(color: Colors.white),
                     ),
-                    const Divider(color: Colors.white12, height: 1),
-                    Expanded(
-                      child: Obx(() {
-                        return ListView.builder(
-                          controller: scrollController,
-                          itemCount: 1 + controller.folders.length,
-                          itemBuilder: (context, index) {
-                            if (index == 0) {
-                              final isHome = pdf.folderId.isEmpty;
-                              return ListTile(
-                                leading: const Icon(
-                                  Icons.home,
-                                  color: Colors.white70,
-                                ),
-                                title: const Text(
-                                  'Home (Root)',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                trailing: isHome
-                                    ? const Icon(
-                                        Icons.check,
-                                        color: Colors.white70,
-                                      )
-                                    : null,
-                                onTap: isHome
-                                    ? null
-                                    : () {
-                                        controller.movePdf(pdf.id, '');
-                                        Get.back();
-                                      },
-                              );
-                            }
-                            final folder = controller.folders[index - 1];
-                            final isCurrent = pdf.folderId == folder.id;
+                    onTap: () {
+                      Get.back();
+                      _showCreateAndMoveFolderDialog(pdf);
+                    },
+                  ),
+                  const Divider(color: Colors.white12, height: 1),
+                  Expanded(
+                    child: Obx(() {
+                      return ListView.builder(
+                        controller: scrollController,
+                        itemCount: 1 + controller.folders.length,
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            final isHome = pdf.folderId.isEmpty;
                             return ListTile(
-                              leading: Icon(
-                                Icons.folder,
-                                color: Color(folder.colorValue ?? 0xFFFFB300),
+                              leading: const Icon(Icons.home, color: Colors.white70),
+                              title: const Text(
+                                'Home (Root)',
+                                style: TextStyle(color: Colors.white),
                               ),
-                              title: Text(
-                                folder.name,
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                              trailing: isCurrent
-                                  ? const Icon(
-                                      Icons.check,
-                                      color: Colors.white70,
-                                    )
+                              trailing: isHome
+                                  ? const Icon(Icons.check, color: Colors.white70)
                                   : null,
-                              onTap: isCurrent
+                              onTap: isHome
                                   ? null
                                   : () {
-                                      controller.movePdf(pdf.id, folder.id);
+                                      controller.movePdf(pdf.id, '');
                                       Get.back();
                                     },
                             );
-                          },
-                        );
-                      }),
-                    ),
-                  ],
-                ),
+                          }
+                          final folder = controller.folders[index - 1];
+                          final isCurrent = pdf.folderId == folder.id;
+                          return ListTile(
+                            leading: Icon(
+                              Icons.folder,
+                              color: Color(folder.colorValue ?? 0xFFFFB300),
+                            ),
+                            title: Text(
+                              folder.name,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            trailing: isCurrent
+                                ? const Icon(Icons.check, color: Colors.white70)
+                                : null,
+                            onTap: isCurrent
+                                ? null
+                                : () {
+                                    controller.movePdf(pdf.id, folder.id);
+                                    Get.back();
+                                  },
+                          );
+                        },
+                      );
+                    }),
+                  ),
+                ],
               );
             },
           ),
@@ -700,41 +704,38 @@ class HomeView extends GetView<HomeController> {
           ),
           color: Colors.white.withValues(alpha: 0.08),
           border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (controller.currentFolderId.isEmpty)
-                  ListTile(
-                    leading: const Icon(
-                      Icons.create_new_folder,
-                      color: Colors.white70,
-                    ),
-                    title: const Text(
-                      'Create Folder',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    onTap: () {
-                      Get.back();
-                      _showCreateFolderDialog();
-                    },
-                  ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 10, bottom: 6),
+                child: _DragHandle(),
+              ),
+              if (controller.currentFolderId.isEmpty)
                 ListTile(
-                  leading: const Icon(
-                    Icons.picture_as_pdf,
-                    color: Colors.white70,
-                  ),
+                  leading: const Icon(Icons.create_new_folder, color: Colors.white70),
                   title: const Text(
-                    'Import PDF',
+                    'Create Folder',
                     style: TextStyle(color: Colors.white),
                   ),
                   onTap: () {
                     Get.back();
-                    controller.importPdf();
+                    _showCreateFolderDialog();
                   },
                 ),
-              ],
-            ),
+              ListTile(
+                leading: const Icon(Icons.picture_as_pdf, color: Colors.white70),
+                title: const Text(
+                  'Import PDF',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Get.back();
+                  controller.importPdf();
+                },
+              ),
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ],
           ),
         );
       },
@@ -742,142 +743,137 @@ class HomeView extends GetView<HomeController> {
   }
 
   void _showCreateFolderDialog() {
-    final List<int> folderColors = [
-      0xFFFFB300, // Amber
-      0xFF00BFA5, // Teal
-      0xFF29B6F6, // Blue
-      0xFFFF5252, // Coral
-      0xFFAB47BC, // Purple
-      0xFF66BB6A, // Green
-    ];
-
     Get.dialog(
       Center(
-        child: GlassyContainer(
-          width: 320,
-          height: 280,
-          borderRadius: BorderRadius.circular(24),
-          color: Colors.white.withValues(alpha: 0.1),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Material(
-              color: Colors.transparent,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "New Folder",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: controller.folderNameController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: "Folder Name",
-                      hintStyle: TextStyle(color: Colors.white38),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white38),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 320),
+          child: GlassyContainer(
+            borderRadius: BorderRadius.circular(24),
+            color: Colors.white.withValues(alpha: 0.1),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Material(
+                color: Colors.transparent,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      "New Folder",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Colors.white,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Select Folder Color",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: Colors.white,
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: controller.folderNameController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        hintText: "Folder Name",
+                        hintStyle: TextStyle(color: Colors.white38),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white38),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Obx(
-                    () => Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: folderColors.map((colorVal) {
-                        final isSelected =
-                            controller.selectedColor.value == colorVal;
-                        return GestureDetector(
-                          onTap: () {
-                            controller.selectedColor.value = colorVal;
-                          },
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(colorVal),
-                              border: Border.all(
-                                color: isSelected
-                                    ? Colors.white
-                                    : Colors.transparent,
-                                width: 2,
+                    const SizedBox(height: 14),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Select Folder Color",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Obx(
+                      () => Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: _kFolderColors.map((colorVal) {
+                          final isSelected =
+                              controller.selectedColor.value == colorVal;
+                          return GestureDetector(
+                            onTap: () {
+                              controller.selectedColor.value = colorVal;
+                            },
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(colorVal),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.transparent,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  if (isSelected)
+                                    BoxShadow(
+                                      color: Color(colorVal)
+                                          .withValues(alpha: 0.5),
+                                      blurRadius: 6,
+                                      spreadRadius: 1,
+                                    ),
+                                ],
                               ),
-                              boxShadow: [
-                                if (isSelected)
-                                  BoxShadow(
-                                    color: Color(
-                                      colorVal,
-                                    ).withValues(alpha: 0.5),
-                                    blurRadius: 6,
-                                    spreadRadius: 1,
-                                  ),
-                              ],
+                              child: isSelected
+                                  ? const Icon(
+                                      Icons.check,
+                                      size: 16,
+                                      color: Colors.black,
+                                    )
+                                  : null,
                             ),
-                            child: isSelected
-                                ? const Icon(
-                                    Icons.check,
-                                    size: 16,
-                                    color: Colors.black,
-                                  )
-                                : null,
-                          ),
-                        );
-                      }).toList(),
+                          );
+                        }).toList(),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          controller.folderNameController.clear();
-                          controller.selectedColor.value = 0xFFFFB300;
-                          Get.back();
-                        },
-                        child: const Text(
-                          "Cancel",
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          controller.createFolder();
-                          Get.back();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha: 0.15),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            controller.folderNameController.clear();
+                            controller.selectedColor.value = 0xFFFFB300;
+                            Get.back();
+                          },
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(color: Colors.white70),
                           ),
                         ),
-                        child: const Text("Create"),
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            controller.createFolder();
+                            Get.back();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.15),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text("Create"),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -886,3 +882,21 @@ class HomeView extends GetView<HomeController> {
     );
   }
 }
+
+/// Reusable styled drag handle pill.
+class _DragHandle extends StatelessWidget {
+  const _DragHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 5,
+      decoration: BoxDecoration(
+        color: Colors.white24,
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
+  }
+}
+
