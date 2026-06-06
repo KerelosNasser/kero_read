@@ -53,19 +53,14 @@ class _ReaderViewState extends State<ReaderView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          debugPrint("ReaderView body constraints: $constraints");
-          return Stack(
-            children: [
-              const SizedBox.expand(),
-              _buildFilteredPdfViewer(),
-              _buildAppBarOverlay(context),
-              _buildSearchBarOverlay(context),
-              _buildPageIndexerOverlay(),
-            ],
-          );
-        },
+      body: Stack(
+        children: [
+          const SizedBox.expand(),
+          _buildFilteredPdfViewer(),
+          _buildAppBarOverlay(context),
+          _buildSearchBarOverlay(context),
+          _buildPageIndexerOverlay(),
+        ],
       ),
       floatingActionButton: _buildFloatingActionButton(context),
     );

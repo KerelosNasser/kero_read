@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -21,6 +22,7 @@ class ReaderController extends GetxController {
 
   sync_pdf.PdfDocument? _cachedSyncDoc;
   Future<void>? _initSyncDocFuture;
+  Timer? _extractDebounce;
 
   // UI visibility state
   var isAppBarVisible = true.obs;
@@ -173,41 +175,40 @@ class ReaderController extends GetxController {
     return _cachedSyncDoc;
   }
 
-  Future<void> extractTextForAi(int pageNumber) async {
-    try {
-      final doc = await _getOrInitSyncDoc();
-      if (doc != null) {
-        String text = sync_pdf.PdfTextExtractor(doc).extractText(
-          startPageIndex: pageNumber - 1,
-          endPageIndex: pageNumber - 1,
-        );
-        Get.find<AiController>().setPageContext(text);
+  void extractTextForAi(int pageNumber) {
+    // Debounce: only extract after user settles on a page for 600ms
+    _extractDebounce?.cancel();
+    _extractDebounce = Timer(const Duration(milliseconds: 600), () async {
+      try {
+        final doc = await _getOrInitSyncDoc();
+        if (doc != null) {
+          final text = sync_pdf.PdfTextExtractor(doc).extractText(
+            startPageIndex: pageNumber - 1,
+            endPageIndex: pageNumber - 1,
+          );
+          Get.find<AiController>().setPageContext(text);
+        }
+      } catch (e) {
+        debugPrint('Error extracting text: $e');
       }
-    } catch (e) {
-      debugPrint("Error extracting text: $e");
-    }
+    });
   }
 
   void toggleAppBarVisibility() {
     isAppBarVisible.value = !isAppBarVisible.value;
-    debugPrint("toggleAppBarVisibility: new value = ${isAppBarVisible.value}");
   }
 
   void onScrollNotification(ScrollNotification notification) {
-    if (_isInitialLoad) {
-      return;
-    }
+    if (_isInitialLoad) return;
 
     // Touch drag scroll handling
     if (notification is UserScrollNotification) {
       if (notification.direction == ScrollDirection.reverse &&
           isAppBarVisible.value) {
         isAppBarVisible.value = false;
-        debugPrint("onScrollNotification (user): hiding AppBar (focus mode)");
       } else if (notification.direction == ScrollDirection.forward &&
           !isAppBarVisible.value) {
         isAppBarVisible.value = true;
-        debugPrint("onScrollNotification (user): showing AppBar");
       }
     }
 
@@ -217,12 +218,8 @@ class ReaderController extends GetxController {
       if (delta != null && delta.abs() > 10) {
         if (delta > 0 && isAppBarVisible.value) {
           isAppBarVisible.value = false;
-          debugPrint(
-            "onScrollNotification (update): hiding AppBar (focus mode)",
-          );
         } else if (delta < 0 && !isAppBarVisible.value) {
           isAppBarVisible.value = true;
-          debugPrint("onScrollNotification (update): showing AppBar");
         }
       }
     }
@@ -255,6 +252,7 @@ class ReaderController extends GetxController {
 
   @override
   void onClose() {
+    _extractDebounce?.cancel();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,

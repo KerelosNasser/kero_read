@@ -68,10 +68,37 @@ class GlassyContainer extends StatelessWidget {
       ),
     ];
 
+    // Fast path: explicit dimensions provided — skip LayoutBuilder measurement pass
+    if (width != null && height != null) {
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(radius),
+          boxShadow: defaultShadows,
+        ),
+        child: GlassmorphicContainer(
+          width: width!,
+          height: height!,
+          borderRadius: radius,
+          blur: blurX,
+          padding: padding as EdgeInsets? ?? EdgeInsets.zero,
+          alignment: alignment,
+          border: borderWidth,
+          linearGradient: containerGradient,
+          borderGradient: borderGradient,
+          child: child,
+        ),
+      );
+    }
+
+    // Fallback: measure from constraints when dimensions are unconstrained
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double w = width ?? (constraints.hasBoundedWidth ? constraints.maxWidth : MediaQuery.of(context).size.width);
-        final double h = height ?? (constraints.hasBoundedHeight ? constraints.maxHeight : 100.0);
+        final double w = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : MediaQuery.of(context).size.width;
+        final double h = constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : 100.0;
 
         return Container(
           decoration: BoxDecoration(

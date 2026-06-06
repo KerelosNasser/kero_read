@@ -13,8 +13,9 @@ class AiChatBottomSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent, // Required for glassy effect
+      backgroundColor: Colors.transparent,
       barrierColor: Colors.black54,
+      showDragHandle: false, // we render our own styled handle
       builder: (context) => AiChatBottomSheet(initialQuestion: initialQuestion),
     );
   }
@@ -41,103 +42,101 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final double sheetWidth = MediaQuery.of(context).size.width;
-    final double sheetHeight = MediaQuery.of(context).size.height * 0.75;
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return GlassyContainer(
-      width: sheetWidth,
-      height: sheetHeight,
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(20),
-        topRight: Radius.circular(20),
-      ),
-      blurX: 15.0,
-      blurY: 15.0,
-      color: Colors.white.withValues(alpha: 0.08),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.75,
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-          left: 16,
-          right: 16,
-          top: 10,
-        ),
-        child: Column(
-          children: [
-            // Handle bar
-            Container(
-              width: 40,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey[600],
-                borderRadius: BorderRadius.circular(10),
-              ),
+    return DraggableScrollableSheet(
+      initialChildSize: 0.55,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      expand: false,
+      snap: true,
+      snapSizes: const [0.55, 0.75, 0.92],
+      builder: (context, scrollController) {
+        return GlassyContainer(
+          width: double.infinity,
+          height: screenHeight * 0.92, // max possible — DraggableScrollableSheet clips it
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+          blurX: 15.0,
+          blurY: 15.0,
+          color: Colors.white.withValues(alpha: 0.08),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: bottomInset + 16,
+              left: 16,
+              right: 16,
+              top: 10,
             ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Row(
+                // Drag handle
+                Container(
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[600],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(
-                      Icons.auto_awesome,
-                      color: Colors.white70,
-                      size: 20,
+                    const Row(
+                      children: [
+                        Icon(Icons.auto_awesome, color: Colors.white70, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          "Gemini AI Assistant",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                      ],
                     ),
-                    SizedBox(width: 8),
-                    Text(
-                      "Gemini AI Assistant",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close, size: 20),
-                  onPressed: () => Navigator.pop(context),
+                const Divider(color: Colors.white24, height: 20),
+
+                // Chat Messages Area
+                Expanded(
+                  child: Obx(() {
+                    if (aiController.messages.isEmpty) {
+                      return _buildEmptyState();
+                    }
+                    return ListView.builder(
+                      controller: scrollController,
+                      itemCount: aiController.messages.length,
+                      itemBuilder: (context, index) {
+                        final msg = aiController.messages[index];
+                        final bool isUser = msg['role'] == 'user';
+                        return _buildMessageRow(msg, isUser);
+                      },
+                    );
+                  }),
                 ),
+
+                // Loading indicator — scoped Obx
+                Obx(() => aiController.isLoading.value
+                    ? _buildLoadingIndicator()
+                    : const SizedBox.shrink()),
+
+                const SizedBox(height: 8),
+
+                // Input box — only send button needs Obx
+                _buildInputBox(),
               ],
             ),
-            const Divider(color: Colors.white24, height: 20),
-
-            // Chat Messages Area
-            Expanded(
-              child: Obx(() {
-                if (aiController.messages.isEmpty) {
-                  return _buildEmptyState();
-                }
-
-                return ListView.builder(
-                  controller: aiController.scrollController,
-                  itemCount: aiController.messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = aiController.messages[index];
-                    bool isUser = msg['role'] == 'user';
-                    return _buildMessageRow(msg, isUser);
-                  },
-                );
-              }),
-            ),
-
-            // Loading indicator
-            Obx(
-              () => aiController.isLoading.value
-                  ? _buildLoadingIndicator()
-                  : const SizedBox.shrink(),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Input Box
-            Obx(
-              () => _buildInputBox(),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -147,26 +146,16 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.chat_bubble_outline,
-              size: 48,
-              color: Colors.grey[600],
-            ),
+            Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[600]),
             const SizedBox(height: 12),
             Text(
               "Ask anything about this page",
-              style: TextStyle(
-                color: Colors.grey[500],
-                fontSize: 15,
-              ),
+              style: TextStyle(color: Colors.grey[500], fontSize: 15),
             ),
             const SizedBox(height: 6),
             Text(
               "Supports equations, tables, and general concepts.",
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -178,10 +167,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                 return ActionChip(
                   label: Text(
                     chipText,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white70,
-                    ),
+                    style: const TextStyle(fontSize: 12, color: Colors.white70),
                   ),
                   backgroundColor: Colors.white.withValues(alpha: 0.08),
                   side: BorderSide(
@@ -202,17 +188,17 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!isUser) ...[
-            _buildAiAvatar(),
-          ],
+          if (!isUser) _buildAiAvatar(),
           Flexible(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * (isUser ? 0.75 : 0.85),
+                maxWidth: MediaQuery.of(context).size.width *
+                    (isUser ? 0.75 : 0.85),
               ),
               decoration: BoxDecoration(
                 color: isUser
@@ -224,30 +210,20 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                   bottomLeft: Radius.circular(isUser ? 12 : 0),
                   bottomRight: Radius.circular(isUser ? 0 : 12),
                 ),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.10),
-                ),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
               ),
               child: isUser
                   ? Text(
                       msg['content'] ?? '',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
                     )
                   : GptMarkdown(
                       msg['content'] ?? '',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
                     ),
             ),
           ),
-          if (isUser) ...[
-            _buildUserAvatar(),
-          ],
+          if (isUser) _buildUserAvatar(),
         ],
       ),
     );
@@ -261,13 +237,10 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.white.withValues(alpha: 0.15),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 0.5),
+        border: Border.all(
+            color: Colors.white.withValues(alpha: 0.25), width: 0.5),
       ),
-      child: const Icon(
-        Icons.auto_awesome,
-        size: 14,
-        color: Colors.white,
-      ),
+      child: const Icon(Icons.auto_awesome, size: 14, color: Colors.white),
     );
   }
 
@@ -276,15 +249,8 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
       margin: const EdgeInsets.only(left: 8, top: 4),
       width: 28,
       height: 28,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.grey[800],
-      ),
-      child: const Icon(
-        Icons.person,
-        size: 14,
-        color: Colors.white,
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey[800]),
+      child: const Icon(Icons.person, size: 14, color: Colors.white),
     );
   }
 
@@ -297,18 +263,12 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
           const SizedBox(
             width: 16,
             height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white70,
-            ),
+            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
           ),
           const SizedBox(width: 10),
           Text(
             "Gemini is thinking...",
-            style: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 12,
-            ),
+            style: TextStyle(color: Colors.grey[400], fontSize: 12),
           ),
         ],
       ),
@@ -320,9 +280,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.12),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
@@ -331,11 +289,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
           Expanded(
             child: TextField(
               controller: aiController.chatTextController,
-              enabled: !aiController.isLoading.value,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.white,
-              ),
+              style: const TextStyle(fontSize: 14, color: Colors.white),
               minLines: 1,
               maxLines: 4,
               keyboardType: TextInputType.multiline,
@@ -347,18 +301,16 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 2.0),
-            child: IconButton(
-              icon: const Icon(
-                Icons.send,
-                color: Colors.white,
-              ),
-              onPressed: aiController.isLoading.value
-                  ? null
-                  : () => aiController.askQuestion(),
-            ),
-          ),
+          // Only this button reacts to isLoading — narrow Obx scope
+          Obx(() => Padding(
+                padding: const EdgeInsets.only(bottom: 2.0),
+                child: IconButton(
+                  icon: const Icon(Icons.send, color: Colors.white),
+                  onPressed: aiController.isLoading.value
+                      ? null
+                      : () => aiController.askQuestion(),
+                ),
+              )),
         ],
       ),
     );
