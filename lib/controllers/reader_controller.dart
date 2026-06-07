@@ -47,17 +47,8 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
     pdfController = PdfViewerController();
     searchTextController = TextEditingController();
 
-    // Dynamically toggle full screen focus mode
-    ever(isAppBarVisible, (bool visible) {
-      if (visible) {
-        SystemChrome.setEnabledSystemUIMode(
-          SystemUiMode.manual,
-          overlays: SystemUiOverlay.values,
-        );
-      } else {
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-      }
-    });
+    // Enter immersive reading mode once to prevent OS-level layout recalculations during scrolling
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
     // Reset initial load status after rendering stabilises
     Future.delayed(const Duration(milliseconds: 1500), () {

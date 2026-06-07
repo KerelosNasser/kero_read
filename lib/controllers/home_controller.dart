@@ -23,6 +23,7 @@ class HomeController extends GetxController {
   var currentFolderId = ''.obs;
   var devicePdfs = <File>[].obs;
   var isScanningDevice = false.obs;
+  var totalBooksCount = 0.obs;
 
   // In-memory index grouping PDFs by folder for O(1) reads
   final Map<String, List<PdfModel>> _pdfsByFolder = {};
@@ -101,6 +102,7 @@ class HomeController extends GetxController {
         return found;
       });
       devicePdfs.value = pdfs;
+      _updateTotalBooksCount();
     } catch (e) {
       if (kDebugMode) debugPrint("Error scanning device: $e");
     } finally {
@@ -174,6 +176,7 @@ class HomeController extends GetxController {
     // Incremental index update
     _pdfsByFolder.putIfAbsent(pdf.folderId, () => []).add(pdf);
     _updatePdfsList();
+    _updateTotalBooksCount();
 
     // Navigate immediately
     Get.to(() => ReaderView(pdf: pdf));
@@ -198,6 +201,19 @@ class HomeController extends GetxController {
       _pdfsByFolder.putIfAbsent(pdf.folderId, () => []).add(pdf);
     }
     _updatePdfsList();
+    _updateTotalBooksCount();
+  }
+
+  void _updateTotalBooksCount() {
+    final Set<String> uniqueFiles = {};
+    for (var pdf in _storage.pdfBox.values) {
+      uniqueFiles.add(pdf.name);
+    }
+    for (var file in devicePdfs) {
+      final name = file.path.split('/').last;
+      uniqueFiles.add(name);
+    }
+    totalBooksCount.value = uniqueFiles.length;
   }
 
   void _updatePdfsList() {
@@ -287,6 +303,7 @@ class HomeController extends GetxController {
 
       _pdfsByFolder.putIfAbsent(pdf.folderId, () => []).add(pdf);
       _updatePdfsList();
+      _updateTotalBooksCount();
     }
   }
 
@@ -304,6 +321,7 @@ class HomeController extends GetxController {
       await _storage.pdfBox.delete(id);
       _pdfsByFolder[pdf.folderId]?.removeWhere((p) => p.id == id);
       _updatePdfsList();
+      _updateTotalBooksCount();
     }
   }
 
@@ -317,6 +335,7 @@ class HomeController extends GetxController {
     _pdfsByFolder.remove(id);
     folders.removeWhere((f) => f.id == id);
     _updatePdfsList();
+    _updateTotalBooksCount();
   }
 
   Future<void> movePdf(String id, String targetFolderId) async {

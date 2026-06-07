@@ -21,7 +21,7 @@ class MiniDashboard extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildDashboardStat("Total Books", () => controller.pdfs.length.toString()),
+              _buildDashboardStat("Total Books", () => controller.totalBooksCount.value.toString()),
               Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.2)),
               _buildDashboardStat("Folders", () => controller.folders.length.toString()),
             ],
