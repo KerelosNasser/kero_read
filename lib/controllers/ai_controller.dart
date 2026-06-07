@@ -38,7 +38,7 @@ class AiController extends GetxController {
   }
 
   void setPageContext(String text) {
-    _aiService.updateContext(text);
+    _aiService.setPageContext(text);
   }
 
   void scrollToBottom() {
@@ -103,10 +103,16 @@ class AiController extends GetxController {
       }
 
       Uint8List? imageBytes;
-      try {
-        imageBytes = await readerController.renderCurrentPageAsImage();
-      } catch (e) {
-        if (kDebugMode) debugPrint('Could not render page image: $e');
+      // Only capture and send the image if we have NO text context for this page
+      // (This means it's likely a scanned PDF or image-only document)
+      final hasTextContext = customContext != null ? customContext.isNotEmpty : _aiService.hasPageContext;
+      
+      if (!hasTextContext) {
+        try {
+          imageBytes = await readerController.renderCurrentPageAsImage();
+        } catch (e) {
+          if (kDebugMode) debugPrint('Could not render page image: $e');
+        }
       }
 
       final int aiMsgIndex = messages.length;

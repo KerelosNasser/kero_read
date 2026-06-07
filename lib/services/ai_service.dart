@@ -41,9 +41,11 @@ class AiService extends GetxService {
     _currentPageContext = '';
   }
 
-  void updateContext(String text) {
+  void setPageContext(String text) {
     _currentPageContext = text;
   }
+
+  bool get hasPageContext => _currentPageContext.trim().isNotEmpty;
 
   Content _buildPromptContent(String question, Uint8List? imageBytes, {String? customContext}) {
     const String systemPrompt =

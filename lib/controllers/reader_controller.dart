@@ -16,7 +16,7 @@ import '../services/ocr_service.dart';
 import '../controllers/ai_controller.dart';
 import '../models/ocr_result_model.dart';
 
-class ReaderController extends GetxController {
+class ReaderController extends GetxController with WidgetsBindingObserver {
   var isDarkMode = false.obs;
   var isLandscape = false.obs;
   final ocrResults = <int, OcrResult>{}.obs;
@@ -43,6 +43,7 @@ class ReaderController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     pdfController = PdfViewerController();
     searchTextController = TextEditingController();
 
@@ -193,7 +194,6 @@ class ReaderController extends GetxController {
 
   void updateLastReadPage(int page) {
     currentPdf.lastReadPage = page;
-    currentPdf.save();
   }
 
   Future<void> performOcr() async {
@@ -425,7 +425,17 @@ class ReaderController extends GetxController {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+      currentPdf.save();
+    }
+  }
+
+  @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
+    currentPdf.save(); // Save progress when leaving the reader
+    
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,

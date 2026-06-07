@@ -24,18 +24,11 @@ class _ReaderViewState extends State<ReaderView> {
   late final ReaderController controller;
   late final Widget _pdfViewerWidget; // Cached to survive dark mode rebuilds
 
-  static const List<double> _invertMatrix = [
-    -1, 0, 0, 0, 255,
-    0, -1, 0, 0, 255,
-    0, 0, -1, 0, 255,
-    0, 0, 0, 1, 0,
-  ];
-
-  static const List<double> _identityMatrix = [
-    1, 0, 0, 0, 0,
-    0, 1, 0, 0, 0,
-    0, 0, 1, 0, 0,
-    0, 0, 0, 1, 0,
+  static const List<double> _invertMatrix = <double>[
+    -1, 0, 0, 0, 255, // Red
+    0, -1, 0, 0, 255, // Green
+    0, 0, -1, 0, 255, // Blue
+    0, 0, 0, 1, 0, // Alpha
   ];
 
   @override
@@ -198,12 +191,13 @@ class _ReaderViewState extends State<ReaderView> {
           return false;
         },
         child: Obx(() {
-          return ColorFiltered(
-            colorFilter: controller.isDarkMode.value
-                ? const ColorFilter.matrix(_invertMatrix)
-                : const ColorFilter.matrix(_identityMatrix),
-            child: _pdfViewerWidget, // Use cached instance — no PDFium reinit
-          );
+          if (controller.isDarkMode.value) {
+            return ColorFiltered(
+              colorFilter: const ColorFilter.matrix(_invertMatrix),
+              child: _pdfViewerWidget,
+            );
+          }
+          return _pdfViewerWidget; // 100% native hardware rendering when not inverted
         }),
       ),
     );
