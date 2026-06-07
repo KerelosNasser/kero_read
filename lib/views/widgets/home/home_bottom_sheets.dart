@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../controllers/home_controller.dart';
@@ -206,6 +207,146 @@ class HomeBottomSheets {
               ),
               SizedBox(height: MediaQuery.of(context).padding.bottom),
             ],
+          ),
+        ),
+      );
+      },
+    );
+  }
+
+  static void showDevicePdfOptions(BuildContext context, File file) {
+    final name = file.path.split('/').last;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final double sheetWidth = MediaQuery.of(context).size.width;
+        return SafeArea(
+          child: GlassyContainer(
+            width: sheetWidth,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            color: Colors.white.withValues(alpha: 0.08),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 10, bottom: 6),
+                child: DragHandle(),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                child: Text(
+                  name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Divider(color: Colors.white12, height: 1),
+              ListTile(
+                leading: const Icon(Icons.drive_file_move, color: Colors.white70),
+                title: const Text('Add to Folder', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Get.back();
+                  showMoveDevicePdfSheet(context, file);
+                },
+              ),
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ],
+          ),
+        ),
+      );
+      },
+    );
+  }
+
+  static void showMoveDevicePdfSheet(BuildContext context, File file) {
+    final controller = Get.find<HomeController>();
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final int folderCount = controller.folders.length;
+    final double contentHeight = 110 + (folderCount + 2) * 56.0;
+    final double sheetHeight = contentHeight.clamp(200.0, screenHeight * 0.6);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final double sheetWidth = MediaQuery.of(context).size.width;
+        return SafeArea(
+          child: GlassyContainer(
+            width: sheetWidth,
+            height: sheetHeight,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            color: Colors.white.withValues(alpha: 0.08),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            child: DraggableScrollableSheet(
+            initialChildSize: 1.0,
+            minChildSize: 0.5,
+            maxChildSize: 1.0,
+            expand: false,
+            builder: (context, scrollController) {
+              return Column(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 10, bottom: 6),
+                    child: DragHandle(),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                    child: Text(
+                      'Add to Folder',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const Divider(color: Colors.white12, height: 1),
+                  Expanded(
+                    child: Obx(() {
+                      return ListView.builder(
+                        controller: scrollController,
+                        itemCount: 1 + controller.folders.length,
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return ListTile(
+                              leading: const Icon(Icons.home, color: Colors.white70),
+                              title: const Text('Home (Root)', style: TextStyle(color: Colors.white)),
+                              onTap: () {
+                                controller.openDevicePdf(file, targetFolderId: '');
+                                Get.back();
+                              },
+                            );
+                          }
+                          final folder = controller.folders[index - 1];
+                          return ListTile(
+                            leading: Icon(Icons.folder, color: Color(folder.colorValue ?? 0xFFFFB300)),
+                            title: Text(folder.name, style: const TextStyle(color: Colors.white)),
+                            onTap: () {
+                              controller.openDevicePdf(file, targetFolderId: folder.id);
+                              Get.back();
+                            },
+                          );
+                        },
+                      );
+                    }),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       );

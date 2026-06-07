@@ -4,6 +4,7 @@ import '../../../controllers/home_controller.dart';
 import '../generative_placeholder.dart';
 import '../glassy_container.dart';
 import 'folder_list_tile.dart';
+import 'home_bottom_sheets.dart';
 
 class DeviceTab extends StatelessWidget {
   const DeviceTab({super.key});
@@ -64,6 +65,10 @@ class DeviceTab extends StatelessWidget {
                   style: const TextStyle(color: Colors.white38, fontSize: 12),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.more_vert, color: Colors.white70),
+                  onPressed: () => HomeBottomSheets.showDevicePdfOptions(context, file),
                 ),
               ),
             ),

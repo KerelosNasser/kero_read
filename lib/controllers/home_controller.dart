@@ -62,7 +62,6 @@ class HomeController extends GetxController {
     isScanningDevice.value = true;
     
     try {
-      // Check if permission is granted, otherwise wait a bit to let requestPermissions() finish
       var status = await Permission.manageExternalStorage.status;
       if (!status.isGranted) {
         await Future.delayed(const Duration(seconds: 2));
@@ -82,7 +81,6 @@ class HomeController extends GetxController {
             for (var entity in entities) {
               if (entity is Directory) {
                 final name = entity.path.split('/').last;
-                // Skip hidden folders and Android system folders to speed up scanning
                 if (!name.startsWith('.') && name != 'Android') {
                   directories.add(entity);
                 }
@@ -90,11 +88,8 @@ class HomeController extends GetxController {
                 found.add(entity);
               }
             }
-          } catch (_) {
-            // Ignore inaccessible directories
-          }
+          } catch (_) {}
         }
-        // Sort by last modified descending
         try {
           found.sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
         } catch (_) {}
@@ -102,7 +97,18 @@ class HomeController extends GetxController {
         return found;
       });
       devicePdfs.value = pdfs;
-      _updateTotalBooksCount();
+      
+      // Calculate total count asynchronously without blocking UI
+      Future.microtask(() {
+        final Set<String> uniqueFiles = {};
+        for (var pdf in _storage.pdfBox.values) {
+          uniqueFiles.add(pdf.name);
+        }
+        for (var file in pdfs) {
+          uniqueFiles.add(file.path.split('/').last);
+        }
+        totalBooksCount.value = uniqueFiles.length;
+      });
     } catch (e) {
       if (kDebugMode) debugPrint("Error scanning device: $e");
     } finally {
@@ -110,11 +116,11 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<void> openDevicePdf(File file) async {
-    await _handleExternalPdf(file.path);
+  Future<void> openDevicePdf(File file, {String? targetFolderId}) async {
+    await _handleExternalPdf(file.path, targetFolderId: targetFolderId);
   }
 
-  Future<void> _handleExternalPdf(String path) async {
+  Future<void> _handleExternalPdf(String path, {String? targetFolderId}) async {
     final file = File(path);
     if (!await file.exists()) return;
 
@@ -167,7 +173,7 @@ class HomeController extends GetxController {
       id: id,
       name: name,
       path: File(permanentPath).existsSync() ? permanentPath : path,
-      folderId: '', // Put it in the root folder
+      folderId: targetFolderId ?? '', // Use targetFolderId or default to root
       timeAdded: DateTime.now(),
     );
 
@@ -205,15 +211,16 @@ class HomeController extends GetxController {
   }
 
   void _updateTotalBooksCount() {
-    final Set<String> uniqueFiles = {};
-    for (var pdf in _storage.pdfBox.values) {
-      uniqueFiles.add(pdf.name);
-    }
-    for (var file in devicePdfs) {
-      final name = file.path.split('/').last;
-      uniqueFiles.add(name);
-    }
-    totalBooksCount.value = uniqueFiles.length;
+    Future.microtask(() {
+      final Set<String> uniqueFiles = {};
+      for (var pdf in _storage.pdfBox.values) {
+        uniqueFiles.add(pdf.name);
+      }
+      for (var file in devicePdfs) {
+        uniqueFiles.add(file.path.split('/').last);
+      }
+      totalBooksCount.value = uniqueFiles.length;
+    });
   }
 
   var recentPdfs = <PdfModel>[].obs;
@@ -318,7 +325,10 @@ class HomeController extends GetxController {
     if (pdf != null) {
       try {
         final file = File(pdf.path);
-        if (await file.exists()) {
+        final appDocDir = await getApplicationDocumentsDirectory();
+        
+        // Only delete the file if it's stored inside the app's internal documents directory
+        if (pdf.path.startsWith(appDocDir.path) && await file.exists()) {
           await file.delete();
         }
       } catch (e) {
