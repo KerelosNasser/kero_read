@@ -216,16 +216,16 @@ class HomeController extends GetxController {
     totalBooksCount.value = uniqueFiles.length;
   }
 
-  List<PdfModel> get recentPdfs {
-    final list = _storage.pdfBox.values.toList();
-    list.sort((a, b) => b.timeAdded.compareTo(a.timeAdded));
-    return list;
-  }
+  var recentPdfs = <PdfModel>[].obs;
 
   void _updatePdfsList() {
     pdfs.value = List<PdfModel>.from(
       _pdfsByFolder[currentFolderId.value] ?? [],
     );
+    
+    final list = _storage.pdfBox.values.toList();
+    list.sort((a, b) => b.timeAdded.compareTo(a.timeAdded));
+    recentPdfs.value = list;
   }
 
   void openFolder(String folderId) {

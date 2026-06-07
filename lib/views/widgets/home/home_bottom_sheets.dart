@@ -14,6 +14,7 @@ class HomeBottomSheets {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
+        final double sheetWidth = MediaQuery.of(context).size.width;
         return SafeArea(
           child: GlassyContainer(
             width: sheetWidth,
@@ -121,7 +122,8 @@ class HomeBottomSheets {
               SizedBox(height: MediaQuery.of(context).padding.bottom),
             ],
           ),
-        );
+        ),
+      );
       },
     );
   }
@@ -132,6 +134,7 @@ class HomeBottomSheets {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
+        final double sheetWidth = MediaQuery.of(context).size.width;
         return SafeArea(
           child: GlassyContainer(
             width: sheetWidth,
@@ -204,7 +207,8 @@ class HomeBottomSheets {
               SizedBox(height: MediaQuery.of(context).padding.bottom),
             ],
           ),
-        );
+        ),
+      );
       },
     );
   }
@@ -221,6 +225,7 @@ class HomeBottomSheets {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
+        final double sheetWidth = MediaQuery.of(context).size.width;
         return SafeArea(
           child: GlassyContainer(
             width: sheetWidth,
@@ -301,7 +306,8 @@ class HomeBottomSheets {
               );
             },
           ),
-        );
+        ),
+      );
       },
     );
   }
@@ -312,6 +318,7 @@ class HomeBottomSheets {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
+        final double sheetWidth = MediaQuery.of(context).size.width;
         return SafeArea(
           child: GlassyContainer(
             width: sheetWidth,
@@ -340,7 +347,8 @@ class HomeBottomSheets {
               const SizedBox(height: 16),
             ],
           ),
-        );
+        ),
+      );
       },
     );
   }
