@@ -14,20 +14,17 @@ class HomeBottomSheets {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final double sheetWidth = MediaQuery.of(context).size.width;
-        final double bottomPadding = MediaQuery.of(context).padding.bottom;
-        final double sheetHeight = 252.0 + bottomPadding;
-        return GlassyContainer(
-          width: sheetWidth,
-          height: sheetHeight,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          color: Colors.white.withValues(alpha: 0.08),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        return SafeArea(
+          child: GlassyContainer(
+            width: sheetWidth,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            color: Colors.white.withValues(alpha: 0.08),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
             children: [
               const Padding(
                 padding: EdgeInsets.only(top: 10, bottom: 6),
@@ -135,20 +132,17 @@ class HomeBottomSheets {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final double sheetWidth = MediaQuery.of(context).size.width;
-        final double bottomPadding = MediaQuery.of(context).padding.bottom;
-        final double sheetHeight = 222.0 + bottomPadding;
-        return GlassyContainer(
-          width: sheetWidth,
-          height: sheetHeight,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          color: Colors.white.withValues(alpha: 0.08),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        return SafeArea(
+          child: GlassyContainer(
+            width: sheetWidth,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            color: Colors.white.withValues(alpha: 0.08),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
             children: [
               const Padding(
                 padding: EdgeInsets.only(top: 10, bottom: 6),
@@ -227,17 +221,17 @@ class HomeBottomSheets {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final double sheetWidth = MediaQuery.of(context).size.width;
-        return GlassyContainer(
-          width: sheetWidth,
-          height: sheetHeight,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          color: Colors.white.withValues(alpha: 0.08),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-          child: DraggableScrollableSheet(
+        return SafeArea(
+          child: GlassyContainer(
+            width: sheetWidth,
+            height: sheetHeight,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            color: Colors.white.withValues(alpha: 0.08),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            child: DraggableScrollableSheet(
             initialChildSize: 1.0,
             minChildSize: 0.5,
             maxChildSize: 1.0,
@@ -318,20 +312,17 @@ class HomeBottomSheets {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final double sheetWidth = MediaQuery.of(context).size.width;
-        final double bottomPadding = MediaQuery.of(context).padding.bottom;
-        final double sheetHeight = (controller.currentFolderId.isEmpty ? 133.0 : 77.0) + bottomPadding;
-        return GlassyContainer(
-          width: sheetWidth,
-          height: sheetHeight,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          color: Colors.white.withValues(alpha: 0.08),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        return SafeArea(
+          child: GlassyContainer(
+            width: sheetWidth,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            color: Colors.white.withValues(alpha: 0.08),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
             children: [
               const Padding(
                 padding: EdgeInsets.only(top: 10, bottom: 6),
@@ -346,15 +337,7 @@ class HomeBottomSheets {
                     HomeDialogs.showCreateFolderDialog();
                   },
                 ),
-              ListTile(
-                leading: const Icon(Icons.picture_as_pdf, color: Colors.white70),
-                title: const Text('Import PDF', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Get.back();
-                  controller.importPdf();
-                },
-              ),
-              SizedBox(height: MediaQuery.of(context).padding.bottom),
+              const SizedBox(height: 16),
             ],
           ),
         );

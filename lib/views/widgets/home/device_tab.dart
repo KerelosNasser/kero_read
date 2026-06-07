@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../controllers/home_controller.dart';
 import '../generative_placeholder.dart';
 import '../glassy_container.dart';
+import 'folder_list_tile.dart';
 
 class DeviceTab extends StatelessWidget {
   const DeviceTab({super.key});
@@ -12,23 +13,32 @@ class DeviceTab extends StatelessWidget {
     final controller = Get.find<HomeController>();
 
     return Obx(() {
-      if (controller.isScanningDevice.value && controller.devicePdfs.isEmpty) {
+      final hasContent = controller.folders.isNotEmpty || controller.devicePdfs.isNotEmpty;
+
+      if (controller.isScanningDevice.value && !hasContent) {
         return const Center(child: CircularProgressIndicator(color: Colors.white));
       }
 
-      if (controller.devicePdfs.isEmpty) {
+      if (!hasContent) {
         return const GenerativePlaceholder(
           title: "No PDFs Found",
-          subtitle: "We couldn't find any PDF files on your device storage.",
+          subtitle: "We couldn't find any PDF files or folders.",
         );
       }
 
+      final int totalCount = controller.folders.length + controller.devicePdfs.length;
+
       return ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-        itemCount: controller.devicePdfs.length,
+        itemCount: totalCount,
         separatorBuilder: (context, index) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
-          final file = controller.devicePdfs[index];
+          if (index < controller.folders.length) {
+            return FolderListTile(folder: controller.folders[index]);
+          }
+          
+          final pdfIndex = index - controller.folders.length;
+          final file = controller.devicePdfs[pdfIndex];
           final name = file.path.split('/').last;
           return GestureDetector(
             onTap: () => controller.openDevicePdf(file),
