@@ -10,6 +10,7 @@ import '../models/pdf_model.dart';
 import '../services/storage_service.dart';
 import '../views/reader_view.dart';
 import 'dart:io';
+import 'dart:isolate';
 
 class HomeController extends GetxController {
   static const _intentChannel = MethodChannel('kero_read/intent');
@@ -20,6 +21,8 @@ class HomeController extends GetxController {
   var folders = <FolderModel>[].obs;
   var pdfs = <PdfModel>[].obs;
   var currentFolderId = ''.obs;
+  var devicePdfs = <File>[].obs;
+  var isScanningDevice = false.obs;
 
   // In-memory index grouping PDFs by folder for O(1) reads
   final Map<String, List<PdfModel>> _pdfsByFolder = {};
@@ -31,6 +34,7 @@ class HomeController extends GetxController {
     requestPermissions();
     loadData();
     setupIntentListener();
+    scanDevicePdfs();
   }
 
   void setupIntentListener() {
@@ -50,6 +54,62 @@ class HomeController extends GetxController {
         _handleExternalPdf(path);
       }
     });
+  }
+
+  Future<void> scanDevicePdfs() async {
+    if (isScanningDevice.value) return;
+    isScanningDevice.value = true;
+    
+    try {
+      // Check if permission is granted, otherwise wait a bit to let requestPermissions() finish
+      var status = await Permission.manageExternalStorage.status;
+      if (!status.isGranted) {
+        await Future.delayed(const Duration(seconds: 2));
+      }
+      
+      final pdfs = await Isolate.run(() {
+        final List<File> found = [];
+        final dir = Directory('/storage/emulated/0');
+        if (!dir.existsSync()) return found;
+
+        final List<Directory> directories = [dir];
+        
+        while (directories.isNotEmpty) {
+          final currentDir = directories.removeLast();
+          try {
+            final entities = currentDir.listSync(followLinks: false);
+            for (var entity in entities) {
+              if (entity is Directory) {
+                final name = entity.path.split('/').last;
+                // Skip hidden folders and Android system folders to speed up scanning
+                if (!name.startsWith('.') && name != 'Android') {
+                  directories.add(entity);
+                }
+              } else if (entity is File && entity.path.toLowerCase().endsWith('.pdf')) {
+                found.add(entity);
+              }
+            }
+          } catch (_) {
+            // Ignore inaccessible directories
+          }
+        }
+        // Sort by last modified descending
+        try {
+          found.sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
+        } catch (_) {}
+        
+        return found;
+      });
+      devicePdfs.value = pdfs;
+    } catch (e) {
+      if (kDebugMode) debugPrint("Error scanning device: $e");
+    } finally {
+      isScanningDevice.value = false;
+    }
+  }
+
+  Future<void> openDevicePdf(File file) async {
+    await _handleExternalPdf(file.path);
   }
 
   Future<void> _handleExternalPdf(String path) async {
