@@ -4,12 +4,20 @@ import 'package:flutter/material.dart';
 import '../services/ai_service.dart';
 import 'reader_controller.dart';
 
+class ChatMessage {
+  final String role;
+  final RxString content;
+
+  ChatMessage({required this.role, required String initialContent})
+    : content = initialContent.obs;
+}
+
 class AiController extends GetxController {
   final AiService _aiService = Get.find<AiService>();
   late TextEditingController chatTextController;
   late ScrollController scrollController;
 
-  var messages = <Map<String, String>>[].obs;
+  var messages = <ChatMessage>[].obs;
   var isLoading = false.obs;
 
   bool _needsScroll = false;
@@ -79,34 +87,38 @@ class AiController extends GetxController {
     if (question.trim().isEmpty) return;
 
     chatTextController.clear();
-    messages.add({'role': 'user', 'content': question});
+    messages.add(ChatMessage(role: 'user', initialContent: question));
     scrollToBottom();
     isLoading.value = true;
 
     try {
       final readerController = Get.find<ReaderController>();
-      
+
       String? customContext;
       final qLower = question.toLowerCase();
-      final wantsWholeDoc = qLower.contains('whole pdf') || 
-                            qLower.contains('entire pdf') || 
-                            qLower.contains('whole document') || 
-                            qLower.contains('entire document') ||
-                            qLower.contains('whole book') ||
-                            qLower.contains('entire book');
+      final wantsWholeDoc =
+          qLower.contains('whole pdf') ||
+          qLower.contains('entire pdf') ||
+          qLower.contains('whole document') ||
+          qLower.contains('entire document') ||
+          qLower.contains('whole book') ||
+          qLower.contains('entire book');
 
       if (wantsWholeDoc) {
-        final wholeText = await readerController.extractPdfText(wholeDocument: true);
+        final wholeText = await readerController.extractPdfText(
+          wholeDocument: true,
+        );
         if (wholeText != null && wholeText.isNotEmpty) {
           customContext = wholeText;
         }
       }
 
       Uint8List? imageBytes;
-      // Only capture and send the image if we have NO text context for this page
-      // (This means it's likely a scanned PDF or image-only document)
-      final hasTextContext = customContext != null ? customContext.isNotEmpty : _aiService.hasPageContext;
-      
+
+      final hasTextContext = customContext != null
+          ? customContext.isNotEmpty
+          : _aiService.hasPageContext;
+
       if (!hasTextContext) {
         try {
           imageBytes = await readerController.renderCurrentPageAsImage();
@@ -115,28 +127,25 @@ class AiController extends GetxController {
         }
       }
 
-      final int aiMsgIndex = messages.length;
-      messages.add({'role': 'ai', 'content': ''});
+      messages.add(ChatMessage(role: 'ai', initialContent: ''));
+      final aiMessage = messages.last;
       scrollToBottom();
 
       String fullResponse = '';
       try {
         final stream = _aiService.askQuestionStream(
-          question, 
+          question,
           imageBytes: imageBytes,
           customContext: customContext,
         );
         await for (final chunk in stream) {
           fullResponse += chunk;
-          messages[aiMsgIndex] = {'role': 'ai', 'content': '$fullResponse ▊'};
-          _scheduleScrollToBottom(); // throttled — at most 1 frame callback queued
+          aiMessage.content.value = '$fullResponse ▊';
+          _scheduleScrollToBottom();
         }
-        messages[aiMsgIndex] = {'role': 'ai', 'content': fullResponse};
+        aiMessage.content.value = fullResponse;
       } catch (e) {
-        messages[aiMsgIndex] = {
-          'role': 'ai',
-          'content': 'Error generating response: $e',
-        };
+        aiMessage.content.value = 'Error generating response: $e';
       }
       scrollToBottom();
     } finally {

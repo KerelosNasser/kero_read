@@ -131,7 +131,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                       itemCount: aiController.messages.length,
                       itemBuilder: (context, index) {
                         final msg = aiController.messages[index];
-                        final bool isUser = msg['role'] == 'user';
+                        final bool isUser = msg.role == 'user';
                         return _buildMessageRow(msg, isUser);
                       },
                     );
@@ -199,7 +199,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
     );
   }
 
-  Widget _buildMessageRow(Map<String, String> msg, bool isUser) {
+  Widget _buildMessageRow(ChatMessage msg, bool isUser) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
@@ -228,14 +228,14 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                 border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
               ),
               child: isUser
-                  ? Text(
-                      msg['content'] ?? '',
+                  ? Obx(() => Text(
+                      msg.content.value,
                       style: const TextStyle(color: Colors.white, fontSize: 14),
-                    )
-                  : GptMarkdown(
-                      msg['content'] ?? '',
+                    ))
+                  : Obx(() => GptMarkdown(
+                      msg.content.value,
                       style: const TextStyle(color: Colors.white, fontSize: 14),
-                    ),
+                    )),
             ),
           ),
           if (isUser) _buildUserAvatar(),
