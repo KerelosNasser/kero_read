@@ -84,9 +84,26 @@ class AiController extends GetxController {
     isLoading.value = true;
 
     try {
+      final readerController = Get.find<ReaderController>();
+      
+      String? customContext;
+      final qLower = question.toLowerCase();
+      final wantsWholeDoc = qLower.contains('whole pdf') || 
+                            qLower.contains('entire pdf') || 
+                            qLower.contains('whole document') || 
+                            qLower.contains('entire document') ||
+                            qLower.contains('whole book') ||
+                            qLower.contains('entire book');
+
+      if (wantsWholeDoc) {
+        final wholeText = await readerController.extractPdfText(wholeDocument: true);
+        if (wholeText != null && wholeText.isNotEmpty) {
+          customContext = wholeText;
+        }
+      }
+
       Uint8List? imageBytes;
       try {
-        final readerController = Get.find<ReaderController>();
         imageBytes = await readerController.renderCurrentPageAsImage();
       } catch (e) {
         if (kDebugMode) debugPrint('Could not render page image: $e');
@@ -98,7 +115,11 @@ class AiController extends GetxController {
 
       String fullResponse = '';
       try {
-        final stream = _aiService.askQuestionStream(question, imageBytes: imageBytes);
+        final stream = _aiService.askQuestionStream(
+          question, 
+          imageBytes: imageBytes,
+          customContext: customContext,
+        );
         await for (final chunk in stream) {
           fullResponse += chunk;
           messages[aiMsgIndex] = {'role': 'ai', 'content': '$fullResponse ▊'};

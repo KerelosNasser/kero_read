@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -24,10 +25,6 @@ class ReaderController extends GetxController {
   late PdfViewerController pdfController;
   final textSearcher = Rxn<PdfTextSearcher>();
   late TextEditingController searchTextController;
-
-  sync_pdf.PdfDocument? _cachedSyncDoc;
-  Future<void>? _initSyncDocFuture;
-  Timer? _extractDebounce;
 
   // UI visibility state
   var isAppBarVisible = true.obs;
@@ -326,41 +323,46 @@ class ReaderController extends GetxController {
     return matchedWords.join(' ');
   }
 
-  Future<sync_pdf.PdfDocument?> _getOrInitSyncDoc() async {
-    if (_cachedSyncDoc != null) return _cachedSyncDoc;
+  Future<String?> extractPdfText({bool wholeDocument = false}) async {
+    final filePath = currentPdf.path;
+    final targetPageNumber = currentPage.value;
 
-    _initSyncDocFuture ??= () async {
+    return await Isolate.run(() async {
       try {
-        final file = File(currentPdf.path);
-        if (await file.exists()) {
-          final bytes = await file.readAsBytes();
-          _cachedSyncDoc = sync_pdf.PdfDocument(inputBytes: bytes);
-        }
-      } catch (e) {
-        if (kDebugMode) debugPrint("Error initializing sync PDF document: $e");
-        _initSyncDocFuture = null; // Allow retry on failure
-      }
-    }();
-
-    await _initSyncDocFuture;
-    return _cachedSyncDoc;
-  }
-
-  void extractTextForAi(int pageNumber) {
-    // Debounce: only extract after user settles on a page for 600ms
-    _extractDebounce?.cancel();
-    _extractDebounce = Timer(const Duration(milliseconds: 600), () async {
-      try {
-        final doc = await _getOrInitSyncDoc();
-        if (doc != null) {
-          final text = sync_pdf.PdfTextExtractor(doc).extractText(
-            startPageIndex: pageNumber - 1,
-            endPageIndex: pageNumber - 1,
+        final file = File(filePath);
+        if (!await file.exists()) return null;
+        
+        final bytes = await file.readAsBytes();
+        final doc = sync_pdf.PdfDocument(inputBytes: bytes);
+        final extractor = sync_pdf.PdfTextExtractor(doc);
+        
+        String extractedText = '';
+        if (wholeDocument) {
+          extractedText = extractor.extractText();
+        } else {
+          // Syncfusion is 0-indexed
+          final pageIndex = (targetPageNumber - 1).clamp(0, doc.pages.count - 1);
+          extractedText = extractor.extractText(
+            startPageIndex: pageIndex,
+            endPageIndex: pageIndex,
           );
-          Get.find<AiController>().setPageContext(text);
         }
+        
+        doc.dispose();
+        
+        // Compress text for whole document
+        if (wholeDocument && extractedText.isNotEmpty) {
+          extractedText = extractedText.replaceAll(RegExp(r'\s+'), ' ').trim();
+          // Safe truncation to ~40k chars to avoid token exhaustion
+          if (extractedText.length > 40000) {
+            extractedText = "${extractedText.substring(0, 40000)}... [Text truncated due to length limits]";
+          }
+        }
+        
+        return extractedText;
       } catch (e) {
-        if (kDebugMode) debugPrint('Error extracting text: $e');
+        debugPrint('Isolate Error extracting text: $e');
+        return null;
       }
     });
   }
@@ -424,7 +426,6 @@ class ReaderController extends GetxController {
 
   @override
   void onClose() {
-    _extractDebounce?.cancel();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -435,7 +436,6 @@ class ReaderController extends GetxController {
     );
     textSearcher.value?.dispose();
     searchTextController.dispose();
-    _cachedSyncDoc?.dispose();
     super.onClose();
   }
 }

@@ -45,7 +45,7 @@ class AiService extends GetxService {
     _currentPageContext = text;
   }
 
-  Content _buildPromptContent(String question, Uint8List? imageBytes) {
+  Content _buildPromptContent(String question, Uint8List? imageBytes, {String? customContext}) {
     const String systemPrompt =
         "You are an expert tutor. Answer the question based on the PDF text/image.\n"
         "Guidelines:\n"
@@ -57,7 +57,7 @@ class AiService extends GetxService {
 
     final promptText =
         "$systemPrompt\n\n"
-        "Text context from page: $_currentPageContext\n\n"
+        "Text context: ${customContext ?? _currentPageContext}\n\n"
         "Question: $question";
 
     return Content.multi([
@@ -66,9 +66,9 @@ class AiService extends GetxService {
     ]);
   }
 
-  Future<String> askQuestion(String question, {Uint8List? imageBytes}) async {
+  Future<String> askQuestion(String question, {Uint8List? imageBytes, String? customContext}) async {
     try {
-      final content = _buildPromptContent(question, imageBytes);
+      final content = _buildPromptContent(question, imageBytes, customContext: customContext);
 
       // Try sending with current model first
       try {
@@ -99,9 +99,9 @@ class AiService extends GetxService {
     }
   }
 
-  Stream<String> askQuestionStream(String question, {Uint8List? imageBytes}) async* {
+  Stream<String> askQuestionStream(String question, {Uint8List? imageBytes, String? customContext}) async* {
     try {
-      final content = _buildPromptContent(question, imageBytes);
+      final content = _buildPromptContent(question, imageBytes, customContext: customContext);
 
       // Try sending stream with current model first
       try {

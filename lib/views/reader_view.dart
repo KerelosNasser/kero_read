@@ -146,7 +146,6 @@ class _ReaderViewState extends State<ReaderView> {
           if (page != null) {
             controller.currentPage.value = page;
             controller.updateLastReadPage(page);
-            controller.extractTextForAi(page);
           }
         },
         onViewerReady: (document, pdfController) {

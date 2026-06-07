@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import '../../controllers/ai_controller.dart';
+import '../../controllers/reader_controller.dart';
 import 'glassy_container.dart';
 
 class AiChatBottomSheet extends StatefulWidget {
@@ -32,12 +33,26 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
     super.initState();
     aiController = Get.find<AiController>();
 
-    if (widget.initialQuestion != null && widget.initialQuestion!.isNotEmpty) {
-      Future.delayed(const Duration(milliseconds: 350), () {
-        aiController.chatTextController.text = widget.initialQuestion!;
-        aiController.askQuestion();
-      });
-    }
+    Future.microtask(() async {
+      try {
+        final readerController = Get.find<ReaderController>();
+        final text = await readerController.extractPdfText(wholeDocument: false);
+        if (text != null && text.isNotEmpty && mounted) {
+          aiController.setPageContext(text);
+        }
+      } catch (e) {
+        debugPrint('Error lazily extracting page text: $e');
+      }
+
+      if (widget.initialQuestion != null && widget.initialQuestion!.isNotEmpty && mounted) {
+        Future.delayed(const Duration(milliseconds: 150), () {
+          if (mounted) {
+            aiController.chatTextController.text = widget.initialQuestion!;
+            aiController.askQuestion();
+          }
+        });
+      }
+    });
   }
 
   @override
