@@ -71,6 +71,11 @@ class _ReaderViewState extends State<ReaderView> {
       controller: controller.pdfController,
       initialPageNumber: widget.pdf.lastReadPage,
       params: PdfViewerParams(
+        // Perf: bound in-memory rendered-page cache to keep peak RSS low.
+        // ponytail: cache limits are static; tune if a doc needs more headroom.
+        limitRenderingCache: true,
+        maxImageBytesCachedOnMemory: 48 * 1024 * 1024, // 48 MB
+        verticalCacheExtent: 0.5,
         onGeneralTap: (context, pdfController, details) {
           controller.toggleAppBarVisibility();
           return false;

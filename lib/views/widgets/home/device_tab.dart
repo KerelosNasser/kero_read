@@ -29,51 +29,56 @@ class DeviceTab extends StatelessWidget {
 
       final int totalCount = controller.folders.length + controller.devicePdfs.length;
 
-      return ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-        itemCount: totalCount,
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          if (index < controller.folders.length) {
-            return FolderListTile(folder: controller.folders[index]);
-          }
-          
-          final pdfIndex = index - controller.folders.length;
-          final file = controller.devicePdfs[pdfIndex];
-          final name = file.path.split('/').last;
-          return GestureDetector(
-            onTap: () => controller.openDevicePdf(file),
-            child: GlassyContainer(
-              borderRadius: BorderRadius.circular(16),
-              color: Colors.white.withValues(alpha: 0.05),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                leading: const Icon(Icons.description, size: 40, color: Colors.white54),
-                title: Text(
-                  name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
+      return RefreshIndicator(
+        onRefresh: controller.scanDevicePdfs,
+        color: Colors.white,
+        backgroundColor: Colors.grey[900],
+        child: ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+          itemCount: totalCount,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            if (index < controller.folders.length) {
+              return FolderListTile(folder: controller.folders[index]);
+            }
+            
+            final pdfIndex = index - controller.folders.length;
+            final file = controller.devicePdfs[pdfIndex];
+            final name = file.path.split('/').last;
+            return GestureDetector(
+              onTap: () => controller.openDevicePdf(file),
+              child: GlassyContainer(
+                borderRadius: BorderRadius.circular(16),
+                color: Colors.white.withValues(alpha: 0.05),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  leading: const Icon(Icons.description, size: 40, color: Colors.white54),
+                  title: Text(
+                    name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(
-                  file.parent.path,
-                  style: const TextStyle(color: Colors.white38, fontSize: 12),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.more_vert, color: Colors.white70),
-                  onPressed: () => HomeBottomSheets.showDevicePdfOptions(context, file),
+                  subtitle: Text(
+                    file.parent.path,
+                    style: const TextStyle(color: Colors.white38, fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.more_vert, color: Colors.white70),
+                    onPressed: () => HomeBottomSheets.showDevicePdfOptions(context, file),
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       );
     });
   }

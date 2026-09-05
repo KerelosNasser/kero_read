@@ -67,6 +67,9 @@ class OcrService extends GetxService {
       }
       return OcrResult(text: resultText, words: words);
     } else {
+      // Drain the response stream so the underlying connection is released
+      // before throwing (avoids leaking an unconsumed socket).
+      await response.stream.drain<void>();
       throw Exception('OCR failed with status code ${response.statusCode}');
     }
   }

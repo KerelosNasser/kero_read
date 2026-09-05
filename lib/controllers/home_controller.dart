@@ -32,7 +32,6 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     folderNameController = TextEditingController();
-    requestPermissions();
     loadData();
     setupIntentListener();
     scanDevicePdfs();
@@ -64,39 +63,48 @@ class HomeController extends GetxController {
     try {
       var status = await Permission.manageExternalStorage.status;
       if (!status.isGranted) {
-        await Future.delayed(const Duration(seconds: 2));
+        await requestPermissions();
+        status = await Permission.manageExternalStorage.status;
+        if (!status.isGranted) {
+          isScanningDevice.value = false;
+          return;
+        }
       }
       
-      final pdfs = await Isolate.run(() {
-        final List<File> found = [];
+      final paths = await Isolate.run(() {
+        final List<String> found = [];
         final dir = Directory('/storage/emulated/0');
         if (!dir.existsSync()) return found;
 
-        final List<Directory> directories = [dir];
-        
+        // ponytail: fixed depth cap; expand if deeper trees hide PDFs.
+        const maxDepth = 6;
+        final List<(Directory, int)> directories = [(dir, 0)];
+
         while (directories.isNotEmpty) {
-          final currentDir = directories.removeLast();
+          final (currentDir, depth) = directories.removeLast();
+          if (depth >= maxDepth) continue;
           try {
             final entities = currentDir.listSync(followLinks: false);
-            for (var entity in entities) {
+            for (final entity in entities) {
+              final name = entity.path.split('/').last;
+              // Skip hidden/system dirs before descending
+              if (name.startsWith('.') || name == 'Android') continue;
               if (entity is Directory) {
-                final name = entity.path.split('/').last;
-                if (!name.startsWith('.') && name != 'Android') {
-                  directories.add(entity);
-                }
-              } else if (entity is File && entity.path.toLowerCase().endsWith('.pdf')) {
-                found.add(entity);
+                directories.add((entity, depth + 1));
+              } else if (entity is File &&
+                  entity.path.toLowerCase().endsWith('.pdf')) {
+                found.add(entity.path); // hold path strings, not File handles
               }
             }
           } catch (_) {}
         }
         try {
-          found.sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
+          found.sort((a, b) =>
+              File(b).lastModifiedSync().compareTo(File(a).lastModifiedSync()));
         } catch (_) {}
-        
         return found;
       });
-      devicePdfs.value = pdfs;
+      devicePdfs.value = paths.map(File.new).toList();
       
       // Calculate total count asynchronously without blocking UI
       Future.microtask(() {
@@ -104,7 +112,7 @@ class HomeController extends GetxController {
         for (var pdf in _storage.pdfBox.values) {
           uniqueFiles.add(pdf.name);
         }
-        for (var file in pdfs) {
+        for (var file in devicePdfs) {
           uniqueFiles.add(file.path.split('/').last);
         }
         totalBooksCount.value = uniqueFiles.length;
@@ -195,6 +203,8 @@ class HomeController extends GetxController {
 
   @override
   void onClose() {
+    // Clear method channel handler to avoid leaks when controller is disposed
+    _intentChannel.setMethodCallHandler(null);
     folderNameController.dispose();
     super.onClose();
   }

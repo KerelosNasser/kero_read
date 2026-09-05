@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../theme/color_tokens.dart';
 import '../controllers/home_controller.dart';
 import 'widgets/glassy_container.dart';
 import 'widgets/home/mini_dashboard.dart';
@@ -45,11 +46,7 @@ class HomeView extends GetView<HomeController> {
         ),
         body: Container(
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF3B1578), Color(0xFF1C0E4B), Color(0xFF0C2461)],
-            ),
+            gradient: AppColors.homeGradient,
           ),
           child: SafeArea(
             child: Obx(() {

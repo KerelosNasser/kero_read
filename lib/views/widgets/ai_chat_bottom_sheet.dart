@@ -35,10 +35,13 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
 
     Future.microtask(() async {
       try {
-        final readerController = Get.find<ReaderController>();
-        final text = await readerController.extractPdfText(wholeDocument: false);
-        if (text != null && text.isNotEmpty && mounted) {
-          aiController.setPageContext(text);
+        // Skip re-extraction when context for this doc is already loaded
+        if (!aiController.hasPageContext) {
+          final readerController = Get.find<ReaderController>();
+          final text = await readerController.extractPdfText(wholeDocument: false);
+          if (text != null && text.isNotEmpty && mounted) {
+            aiController.setPageContext(text);
+          }
         }
       } catch (e) {
         debugPrint('Error lazily extracting page text: $e');

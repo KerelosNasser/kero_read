@@ -40,6 +40,10 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
   var currentPage = 1.obs;
   var pageCount = 0.obs;
 
+  // (filePath, text) cache for whole-document extraction.
+  // ponytail: single-entry cache; key by path+modified time if docs change.
+  (String, String)? _wholeDocCache;
+
   @override
   void onInit() {
     super.onInit();
@@ -59,13 +63,17 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
   void initTextSearcher() {
     if (textSearcher.value != null) return;
     final searcher = PdfTextSearcher(pdfController);
-    searcher.addListener(() {
-      isSearching.value = searcher.isSearching;
-      totalMatches.value = searcher.matches.length;
-      currentMatchIndex.value =
-          (searcher.currentIndex ?? -1) + 1; // 1-indexed for display
-    });
+    searcher.addListener(_onSearcherChanged);
     textSearcher.value = searcher;
+  }
+
+  void _onSearcherChanged() {
+    final searcher = textSearcher.value;
+    if (searcher == null) return;
+    isSearching.value = searcher.isSearching;
+    totalMatches.value = searcher.matches.length;
+    currentMatchIndex.value =
+        (searcher.currentIndex ?? -1) + 1; // 1-indexed for display
   }
 
   void toggleSearchBar() {
@@ -318,7 +326,14 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
     final filePath = currentPdf.path;
     final targetPageNumber = currentPage.value;
 
-    return await Isolate.run(() async {
+    // Skip re-extracting the whole document when the same file was already
+    // parsed; extraction is heavy even in the isolate.
+    if (wholeDocument) {
+      final cached = _wholeDocCache;
+      if (cached != null && cached.$1 == filePath) return cached.$2;
+    }
+
+    final result = await Isolate.run(() async {
       try {
         final file = File(filePath);
         if (!await file.exists()) return null;
@@ -356,6 +371,11 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
         return null;
       }
     });
+
+    if (wholeDocument && result != null && result.isNotEmpty) {
+      _wholeDocCache = (filePath, result);
+    }
+    return result;
   }
 
   void toggleAppBarVisibility() {
@@ -396,23 +416,68 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
       if (pageNumber == null) return null;
 
       final page = document.pages[pageNumber - 1];
+      // Raster stays on UI isolate (native pdfrx call); only the PNG encode
+      // is offloaded to a background isolate.
+      // ponytail: page raster itself is native; review if encode is not the
+      // bottleneck on low-end devices.
       final pageImage = await page.render(
-        width: (page.width * 1.5).toInt(),
-        height: (page.height * 1.5).toInt(),
+        width: page.width.toInt(),
+        height: page.height.toInt(),
       );
       if (pageImage == null) return null;
 
       final ui.Image uiImage = await pageImage.createImage();
-      final byteData = await uiImage.toByteData(format: ui.ImageByteFormat.png);
+      // Fast CPU-side copy of raw RGBA pixels (no encode yet).
+      final rawPixels =
+          await uiImage.toByteData(format: ui.ImageByteFormat.rawRgba);
+      final width = uiImage.width;
+      final height = uiImage.height;
       uiImage.dispose(); // ← dispose native handle immediately after byte extraction
       pageImage.dispose();
 
-      if (byteData == null) return null;
-      return byteData.buffer.asUint8List();
+      if (rawPixels == null) return null;
+      // PNG encode off the UI isolate.
+      return await compute(
+        _encodePng,
+        (
+          pixels: rawPixels.buffer.asUint8List(),
+          width: width,
+          height: height,
+        ),
+      );
     } catch (e) {
       if (kDebugMode) debugPrint("Error rendering current page: $e");
       return null;
     }
+  }
+
+  /// Top-level PNG encode for [compute]; runs on a background isolate.
+  static Future<Uint8List?> _encodePng(
+      ({Uint8List pixels, int width, int height}) args) async {
+    try {
+      final image = await _decodeImageFromPixels(args);
+      final ByteData? png =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+      return png?.buffer.asUint8List();
+    } catch (e) {
+      if (kDebugMode) debugPrint("Isolate PNG encode failed: $e");
+      return null;
+    }
+  }
+
+  /// dart:ui's [ui.decodeImageFromPixels] is callback-based; bridge to a Future.
+  static Future<ui.Image> _decodeImageFromPixels(
+      ({Uint8List pixels, int width, int height}) args) {
+    final completer = Completer<ui.Image>();
+    ui.decodeImageFromPixels(
+      args.pixels,
+      args.width,
+      args.height,
+      ui.PixelFormat.rgba8888,
+      completer.complete,
+    );
+    return completer.future;
   }
 
   @override
@@ -435,7 +500,9 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
       SystemUiMode.manual,
       overlays: SystemUiOverlay.values,
     );
+    textSearcher.value?.removeListener(_onSearcherChanged);
     textSearcher.value?.dispose();
+    _wholeDocCache = null; // release cached whole-doc text
     searchTextController.dispose();
     super.onClose();
   }

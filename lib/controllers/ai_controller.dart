@@ -49,6 +49,9 @@ class AiController extends GetxController {
     _aiService.setPageContext(text);
   }
 
+  /// True when page context is already loaded (skip redundant re-extraction).
+  bool get hasPageContext => _aiService.hasPageContext;
+
   void scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (scrollController.hasClients) {

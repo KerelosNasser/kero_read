@@ -4,6 +4,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/storage_service.dart';
 import 'services/ocr_service.dart';
 import 'services/ai_service.dart';
+import 'theme/app_theme.dart';
+import 'theme/theme_manager.dart';
 import 'views/home_view.dart';
 
 void main() async {
@@ -17,6 +19,7 @@ void main() async {
 
 Future<void> initServices() async {
   await Get.putAsync(() => StorageService().init());
+  await Get.putAsync(() => ThemeManager().init());
   Get.put(OcrService());
   await Get.putAsync(() => AiService().init());
 }
@@ -26,20 +29,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Kero Read',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        colorScheme: const ColorScheme.dark(
-          primary: Colors.white,
-          surface: Color(0xFF141527),
-        ),
-        scaffoldBackgroundColor: const Color(0xFF141527),
-        useMaterial3: true,
+    final themeManager = Get.find<ThemeManager>();
+    return Obx(
+      () => GetMaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Kero Read',
+        theme: AppTheme.buildLightTheme(),
+        darkTheme: AppTheme.buildDarkTheme(),
+        themeMode: themeManager.mode.value,
+        enableLog: false,
+        home: HomeView(),
       ),
-      enableLog: false,
-      home: HomeView(),
     );
   }
 }
