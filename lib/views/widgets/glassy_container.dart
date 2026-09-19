@@ -1,5 +1,5 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:glassmorphism/glassmorphism.dart';
 
 class GlassyContainer extends StatelessWidget {
   final Widget child;
@@ -13,112 +13,97 @@ class GlassyContainer extends StatelessWidget {
   final double? width;
   final double? height;
   final AlignmentGeometry? alignment;
+  final bool enableBlur;
 
   const GlassyContainer({
     super.key,
     required this.child,
     required this.borderRadius,
-    this.blurX = 12.0,
-    this.blurY = 12.0,
+    this.blurX = 14.0,
+    this.blurY = 14.0,
     this.color,
     this.padding,
     this.border,
     this.boxShadow,
     this.width,
     this.height,
-    this.alignment = Alignment.center,
+    this.alignment,
+    this.enableBlur = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Extract single double radius for GlassmorphicContainer
-    final double radius = borderRadius.topLeft.x;
-
-    // Handle transparent border or customize width
-    final bool isBorderTransparent = border is Border && (border as Border).top.color == Colors.transparent;
-    final double borderWidth = isBorderTransparent ? 0.0 : (border is Border ? (border as Border).top.width : 1.0);
-
-    // Set linearGradient using the color parameter
     final baseColor = color ?? Colors.white;
     final containerGradient = LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        baseColor.withValues(alpha: color != null ? color!.a * 0.40 : 0.12),
+        baseColor.withValues(alpha: color != null ? color!.a * 0.40 : 0.10),
         baseColor.withValues(alpha: color != null ? color!.a * 0.15 : 0.04),
       ],
       stops: const [0.1, 1.0],
     );
 
-    final borderGradient = LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        isBorderTransparent ? Colors.transparent : Colors.white.withValues(alpha: 0.18),
-        isBorderTransparent ? Colors.transparent : Colors.white.withValues(alpha: 0.04),
-      ],
-    );
+    final isBorderTransparent =
+        border is Border && (border as Border).top.color == Colors.transparent;
+    final defaultBorder = isBorderTransparent
+        ? null
+        : (border ??
+            Border.all(
+              color: Colors.white.withValues(alpha: 0.15),
+              width: 1.0,
+            ));
 
     final defaultShadows = boxShadow ?? [
       BoxShadow(
-        color: Colors.black.withValues(alpha: 0.25),
-        blurRadius: 10,
-        spreadRadius: 1,
+        color: Colors.black.withValues(alpha: 0.20),
+        blurRadius: 12,
+        spreadRadius: 0,
         offset: const Offset(0, 4),
       ),
     ];
 
-    // Fast path: explicit dimensions provided — skip LayoutBuilder measurement pass
-    if (width != null && height != null) {
+    final Widget content = Container(
+      width: width,
+      height: height,
+      padding: padding,
+      alignment: alignment,
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        gradient: containerGradient,
+        border: defaultBorder,
+      ),
+      child: child,
+    );
+
+    // High-performance path for repeated scroll items:
+    // Skips expensive BackdropFilter saveLayers to eliminate GPU/raster jank.
+    if (!enableBlur) {
       return Container(
+        width: width,
+        height: height,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(radius),
+          borderRadius: borderRadius,
           boxShadow: defaultShadows,
         ),
-        child: GlassmorphicContainer(
-          width: width!,
-          height: height!,
-          borderRadius: radius,
-          blur: blurX,
-          padding: padding as EdgeInsets? ?? EdgeInsets.zero,
-          alignment: alignment,
-          border: borderWidth,
-          linearGradient: containerGradient,
-          borderGradient: borderGradient,
-          child: child,
-        ),
+        child: content,
       );
     }
 
-    // Fallback: measure from constraints when dimensions are unconstrained
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final double w = constraints.hasBoundedWidth
-            ? constraints.maxWidth
-            : MediaQuery.of(context).size.width;
-        final double h = constraints.hasBoundedHeight
-            ? constraints.maxHeight
-            : 100.0;
-
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(radius),
-            boxShadow: defaultShadows,
-          ),
-          child: GlassmorphicContainer(
-            width: w,
-            height: h,
-            borderRadius: radius,
-            blur: blurX,
-            padding: padding as EdgeInsets? ?? EdgeInsets.zero,
-            alignment: alignment,
-            border: borderWidth,
-            linearGradient: containerGradient,
-            borderGradient: borderGradient,
-            child: child,
-          ),
-        );
-      },
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: defaultShadows,
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: blurX, sigmaY: blurY),
+          child: content,
+        ),
+      ),
     );
   }
 }

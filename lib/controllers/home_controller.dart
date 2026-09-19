@@ -236,11 +236,9 @@ class HomeController extends GetxController {
   void setSearchQuery(String q) => searchQuery.value = q;
 
   PdfModel? get continueReadingPdf {
-    final list = _storage.pdfBox.values.toList();
-    if (list.isEmpty) return null;
-    list.sort((a, b) => b.timeAdded.compareTo(a.timeAdded));
-    final inProgress = list.where((p) => p.lastReadPage > 1).toList();
-    return inProgress.isNotEmpty ? inProgress.first : list.first;
+    if (recentPdfs.isEmpty) return null;
+    final inProgress = recentPdfs.where((p) => p.lastReadPage > 1).toList();
+    return inProgress.isNotEmpty ? inProgress.first : recentPdfs.first;
   }
 
   List<FolderModel> get filteredFolders {
@@ -258,15 +256,15 @@ class HomeController extends GetxController {
         (selectedFilter.value == HomeFilter.folders || selectedFilter.value == HomeFilter.device)) {
       return [];
     }
-    var list = pdfs.toList();
+    Iterable<PdfModel> items = pdfs;
     if (selectedFilter.value == HomeFilter.inProgress) {
-      list = list.where((p) => p.lastReadPage > 1).toList();
+      items = items.where((p) => p.lastReadPage > 1);
     }
     final q = searchQuery.value.trim().toLowerCase();
     if (q.isNotEmpty) {
-      list = list.where((p) => p.name.toLowerCase().contains(q)).toList();
+      items = items.where((p) => p.name.toLowerCase().contains(q));
     }
-    return list;
+    return items.toList();
   }
 
   List<File> get filteredDevicePdfs {
@@ -274,12 +272,9 @@ class HomeController extends GetxController {
     if (selectedFilter.value == HomeFilter.folders || selectedFilter.value == HomeFilter.inProgress) {
       return [];
     }
-    var list = devicePdfs.toList();
     final q = searchQuery.value.trim().toLowerCase();
-    if (q.isNotEmpty) {
-      list = list.where((f) => f.path.split('/').last.toLowerCase().contains(q)).toList();
-    }
-    return list;
+    if (q.isEmpty) return devicePdfs;
+    return devicePdfs.where((f) => f.path.split('/').last.toLowerCase().contains(q)).toList();
   }
 
   void loadData() {

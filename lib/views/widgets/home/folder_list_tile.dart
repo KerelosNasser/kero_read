@@ -19,6 +19,7 @@ class FolderListTile extends StatelessWidget {
       onTap: () => controller.openFolder(folder.id),
       onLongPress: () => HomeBottomSheets.showFolderOptions(context, folder),
       child: GlassyContainer(
+        enableBlur: false, // Performance: skip saveLayer in scrollable list
         borderRadius: BorderRadius.circular(18),
         color: folderColor.withValues(alpha: 0.12),
         border: Border.all(
@@ -65,18 +66,20 @@ class FolderListTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 3),
-                    Obx(() {
-                      final count = controller.pdfs
-                          .where((p) => p.folderId == folder.id)
-                          .length;
-                      return Text(
-                        count == 1 ? "1 book" : "$count books",
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 12,
-                        ),
-                      );
-                    }),
+                    Builder(
+                      builder: (context) {
+                        final count = controller.pdfs
+                            .where((p) => p.folderId == folder.id)
+                            .length;
+                        return Text(
+                          count == 1 ? "1 book" : "$count books",
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 12,
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),

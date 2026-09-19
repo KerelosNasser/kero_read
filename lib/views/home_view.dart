@@ -89,21 +89,21 @@ class HomeView extends GetView<HomeController> {
                       folders.isNotEmpty || pdfs.isNotEmpty || devicePdfs.isNotEmpty;
 
                   return ListView(
-                    padding: EdgeInsets.fromLTRB(16, topPadding + 76, 16, 100),
+                    padding: EdgeInsets.fromLTRB(16, topPadding + 70, 16, 100),
                     physics: const AlwaysScrollableScrollPhysics(
                       parent: BouncingScrollPhysics(),
                     ),
                     children: [
                       if (!isInsideFolder && !isSearching) ...[
                         HeroContinueReadingCard(controller: controller),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 14),
                         HomeQuickActions(controller: controller),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
                         HomeFilterRow(controller: controller),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 16),
                       ] else if (isInsideFolder) ...[
                         _buildFolderHeader(context),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
                       ],
                       if (!hasAnyContent) ...[
                         _buildEmptyState(context, isSearching),
@@ -119,7 +119,7 @@ class HomeView extends GetView<HomeController> {
             ),
             // Floating HomeAppBar
             Positioned(
-              top: topPadding + 8,
+              top: topPadding + 6,
               left: 16,
               right: 16,
               child: HomeAppBar(controller: controller),
@@ -130,9 +130,9 @@ class HomeView extends GetView<HomeController> {
       floatingActionButton: Obx(() {
         final isInsideFolder = controller.currentFolderId.isNotEmpty;
         return GlassyContainer(
-          width: 54,
-          height: 54,
-          borderRadius: BorderRadius.circular(27),
+          width: 52,
+          height: 52,
+          borderRadius: BorderRadius.circular(26),
           color: Colors.white.withValues(alpha: 0.12),
           border: Border.all(
             color: Colors.white.withValues(alpha: 0.25),
@@ -141,7 +141,7 @@ class HomeView extends GetView<HomeController> {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(27),
+              borderRadius: BorderRadius.circular(26),
               onTap: () {
                 if (isInsideFolder) {
                   controller.importPdf();
@@ -153,7 +153,7 @@ class HomeView extends GetView<HomeController> {
                 child: Icon(
                   isInsideFolder ? Icons.add : Icons.create_new_folder_outlined,
                   color: Colors.white,
-                  size: 24,
+                  size: 22,
                 ),
               ),
             ),
@@ -170,18 +170,18 @@ class HomeView extends GetView<HomeController> {
     final folderColor = Color(folder?.colorValue ?? 0xFFFFB300);
 
     return GlassyContainer(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(18),
       color: folderColor.withValues(alpha: 0.12),
       border: Border.all(
         color: folderColor.withValues(alpha: 0.28),
         width: 1.0,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: folderColor.withValues(alpha: 0.2),
@@ -190,28 +190,31 @@ class HomeView extends GetView<HomeController> {
                   width: 1,
                 ),
               ),
-              child: Icon(Icons.folder_open_rounded, color: folderColor, size: 24),
+              child: Icon(Icons.folder_open_rounded, color: folderColor, size: 20),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     folder?.name ?? "Folder",
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontSize: 17,
+                      fontSize: 16,
                       letterSpacing: -0.3,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   Text(
                     "${controller.pdfs.length} books",
                     style: const TextStyle(
                       color: Colors.white60,
-                      fontSize: 12,
+                      fontSize: 11,
                     ),
                   ),
                 ],
@@ -219,15 +222,15 @@ class HomeView extends GetView<HomeController> {
             ),
             ElevatedButton.icon(
               onPressed: () => controller.importPdf(),
-              icon: const Icon(Icons.add, size: 16),
-              label: const Text("Import", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              icon: const Icon(Icons.add, size: 14),
+              label: const Text("Import", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white.withValues(alpha: 0.15),
                 foregroundColor: Colors.white,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
                     color: Colors.white.withValues(alpha: 0.25),
                   ),
@@ -251,50 +254,50 @@ class HomeView extends GetView<HomeController> {
       children: [
         if (folders.isNotEmpty) ...[
           _buildSectionHeader("Folders", folders.length),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: folders.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.35,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1.15,
             ),
             itemBuilder: (context, index) => FolderGridCard(folder: folders[index]),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
         ],
         if (pdfs.isNotEmpty) ...[
           _buildSectionHeader("Library Books", pdfs.length),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: pdfs.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.72,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 0.67,
             ),
             itemBuilder: (context, index) => PdfGridCard(pdf: pdfs[index]),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
         ],
         if (devicePdfs.isNotEmpty) ...[
           _buildSectionHeader("Device Documents", devicePdfs.length),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: devicePdfs.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.72,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 0.67,
             ),
             itemBuilder: (context, index) => DevicePdfGridCard(file: devicePdfs[index]),
           ),
@@ -314,36 +317,36 @@ class HomeView extends GetView<HomeController> {
       children: [
         if (folders.isNotEmpty) ...[
           _buildSectionHeader("Folders", folders.length),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: folders.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 10),
+            separatorBuilder: (context, index) => const SizedBox(height: 8),
             itemBuilder: (context, index) => FolderListTile(folder: folders[index]),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
         ],
         if (pdfs.isNotEmpty) ...[
           _buildSectionHeader("Library Books", pdfs.length),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: pdfs.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 10),
+            separatorBuilder: (context, index) => const SizedBox(height: 8),
             itemBuilder: (context, index) => PdfListTile(pdf: pdfs[index]),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
         ],
         if (devicePdfs.isNotEmpty) ...[
           _buildSectionHeader("Device Documents", devicePdfs.length),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: devicePdfs.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 10),
+            separatorBuilder: (context, index) => const SizedBox(height: 8),
             itemBuilder: (context, index) => DevicePdfListTile(file: devicePdfs[index]),
           ),
         ],
@@ -358,14 +361,14 @@ class HomeView extends GetView<HomeController> {
           title,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 15,
+            fontSize: 14,
             fontWeight: FontWeight.bold,
             letterSpacing: -0.2,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
@@ -374,7 +377,7 @@ class HomeView extends GetView<HomeController> {
             "$count",
             style: const TextStyle(
               color: Colors.white70,
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -392,7 +395,7 @@ class HomeView extends GetView<HomeController> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white.withValues(alpha: 0.05),
@@ -402,16 +405,16 @@ class HomeView extends GetView<HomeController> {
                 ),
                 child: const Icon(
                   Icons.search_off_rounded,
-                  size: 40,
+                  size: 36,
                   color: Colors.white60,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               const Text(
                 "No Matching Documents",
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 17,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -420,7 +423,7 @@ class HomeView extends GetView<HomeController> {
                 "Try searching for another keyword or clear the search query.",
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.5),
-                  fontSize: 13,
+                  fontSize: 12,
                 ),
                 textAlign: TextAlign.center,
               ),

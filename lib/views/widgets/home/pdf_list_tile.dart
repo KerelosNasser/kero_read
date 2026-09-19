@@ -20,6 +20,7 @@ class PdfListTile extends StatelessWidget {
       onTap: () => Get.to(() => ReaderView(pdf: pdf)),
       onLongPress: () => HomeBottomSheets.showPdfOptions(context, pdf),
       child: GlassyContainer(
+        enableBlur: false, // Performance: skip saveLayer in scrollable list
         borderRadius: BorderRadius.circular(18),
         color: Colors.white.withValues(alpha: 0.06),
         border: Border.all(
@@ -126,6 +127,7 @@ class DevicePdfListTile extends StatelessWidget {
       onTap: () => controller.openDevicePdf(file),
       onLongPress: () => HomeBottomSheets.showDevicePdfOptions(context, file),
       child: GlassyContainer(
+        enableBlur: false, // Performance: skip saveLayer in scrollable list
         borderRadius: BorderRadius.circular(18),
         color: Colors.white.withValues(alpha: 0.05),
         border: Border.all(

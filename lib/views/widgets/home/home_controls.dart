@@ -21,7 +21,7 @@ class HomeQuickActions extends StatelessWidget {
             onTap: () => controller.importPdf(),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: _buildActionPill(
             icon: Icons.create_new_folder_outlined,
@@ -30,7 +30,7 @@ class HomeQuickActions extends StatelessWidget {
             onTap: () => HomeDialogs.showCreateFolderDialog(),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: Obx(() {
             final isScanning = controller.isScanningDevice.value;
@@ -67,12 +67,12 @@ class HomeQuickActions extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 6.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: accentColor.withValues(alpha: 0.15),
@@ -83,25 +83,26 @@ class HomeQuickActions extends StatelessWidget {
                   ),
                   child: isLoading
                       ? SizedBox(
-                          width: 18,
-                          height: 18,
+                          width: 16,
+                          height: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
                             color: accentColor,
                           ),
                         )
-                      : Icon(icon, size: 18, color: Colors.white),
+                      : Icon(icon, size: 16, color: Colors.white),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   label,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
@@ -132,11 +133,11 @@ class HomeFilterRow extends StatelessWidget {
               child: Row(
                 children: [
                   _buildFilterChip("All", HomeFilter.all, currentFilter),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   _buildFilterChip("In Progress", HomeFilter.inProgress, currentFilter),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   _buildFilterChip("Folders", HomeFilter.folders, currentFilter),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   _buildFilterChip("Device", HomeFilter.device, currentFilter),
                 ],
               ),
@@ -158,7 +159,7 @@ class HomeFilterRow extends StatelessWidget {
                 color: Colors.white,
               ),
               tooltip: isGrid ? "Switch to List" : "Switch to Grid",
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(7),
               constraints: const BoxConstraints(),
               onPressed: () => controller.toggleViewMode(),
             ),
@@ -175,12 +176,12 @@ class HomeFilterRow extends StatelessWidget {
       onTap: () => controller.setFilter(filter),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
           color: isSelected
               ? Colors.white.withValues(alpha: 0.2)
               : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
                 ? Colors.white.withValues(alpha: 0.35)
@@ -192,7 +193,7 @@ class HomeFilterRow extends StatelessWidget {
           label,
           style: TextStyle(
             color: isSelected ? Colors.white : Colors.white60,
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
           ),
         ),

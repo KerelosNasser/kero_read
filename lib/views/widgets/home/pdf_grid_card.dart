@@ -20,14 +20,15 @@ class PdfGridCard extends StatelessWidget {
       onTap: () => Get.to(() => ReaderView(pdf: pdf)),
       onLongPress: () => HomeBottomSheets.showPdfOptions(context, pdf),
       child: GlassyContainer(
-        borderRadius: BorderRadius.circular(20),
+        enableBlur: false, // Performance: skip saveLayer in scrollable grid
+        borderRadius: BorderRadius.circular(18),
         color: Colors.white.withValues(alpha: 0.07),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.14),
           width: 1.0,
         ),
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(10.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -44,7 +45,7 @@ class PdfGridCard extends StatelessWidget {
                         Colors.indigo.withValues(alpha: 0.15),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.15),
                       width: 1,
@@ -55,22 +56,22 @@ class PdfGridCard extends StatelessWidget {
                       const Center(
                         child: Icon(
                           Icons.picture_as_pdf_rounded,
-                          size: 38,
+                          size: 34,
                           color: Colors.white70,
                         ),
                       ),
                       if (page > 0)
                         Positioned(
-                          top: 8,
-                          right: 8,
+                          top: 6,
+                          right: 6,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 3,
+                              horizontal: 5,
+                              vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.55),
-                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.black.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(6),
                               border: Border.all(
                                 color: Colors.white.withValues(alpha: 0.2),
                                 width: 0.5,
@@ -80,7 +81,7 @@ class PdfGridCard extends StatelessWidget {
                               "p. $page",
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 10,
+                                fontSize: 9,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -90,20 +91,20 @@ class PdfGridCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               // Title
               Text(
                 pdf.name,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 13,
+                  fontSize: 12,
                   letterSpacing: -0.2,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               // Footer
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -112,7 +113,7 @@ class PdfGridCard extends StatelessWidget {
                     page > 0 ? "Reading" : "Unread",
                     style: TextStyle(
                       color: page > 0 ? Colors.amberAccent : Colors.white38,
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -122,7 +123,7 @@ class PdfGridCard extends StatelessWidget {
                       padding: EdgeInsets.all(2.0),
                       child: Icon(
                         Icons.more_vert,
-                        size: 16,
+                        size: 15,
                         color: Colors.white54,
                       ),
                     ),
@@ -151,14 +152,15 @@ class DevicePdfGridCard extends StatelessWidget {
       onTap: () => controller.openDevicePdf(file),
       onLongPress: () => HomeBottomSheets.showDevicePdfOptions(context, file),
       child: GlassyContainer(
-        borderRadius: BorderRadius.circular(20),
+        enableBlur: false, // Performance: skip saveLayer in scrollable grid
+        borderRadius: BorderRadius.circular(18),
         color: Colors.white.withValues(alpha: 0.05),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.12),
           width: 1.0,
         ),
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(10.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -174,7 +176,7 @@ class DevicePdfGridCard extends StatelessWidget {
                         Colors.blueGrey.withValues(alpha: 0.1),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.12),
                       width: 1,
@@ -183,25 +185,25 @@ class DevicePdfGridCard extends StatelessWidget {
                   child: const Center(
                     child: Icon(
                       Icons.description_rounded,
-                      size: 38,
+                      size: 34,
                       color: Colors.white60,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(
                 name,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
-                  fontSize: 13,
+                  fontSize: 12,
                   letterSpacing: -0.2,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -209,7 +211,7 @@ class DevicePdfGridCard extends StatelessWidget {
                     "Device File",
                     style: TextStyle(
                       color: Colors.white38,
-                      fontSize: 11,
+                      fontSize: 10,
                     ),
                   ),
                   GestureDetector(
@@ -218,7 +220,7 @@ class DevicePdfGridCard extends StatelessWidget {
                       padding: EdgeInsets.all(2.0),
                       child: Icon(
                         Icons.more_vert,
-                        size: 16,
+                        size: 15,
                         color: Colors.white54,
                       ),
                     ),

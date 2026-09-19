@@ -10,12 +10,8 @@ class HomeAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double appBarWidth = screenWidth - 32; // matching left/right padding of 16
-
     return GlassyContainer(
-      width: appBarWidth,
-      height: 60.0,
+      height: 56.0,
       borderRadius: BorderRadius.circular(28),
       color: Colors.white.withValues(alpha: 0.08),
       border: Border.all(
@@ -23,8 +19,8 @@ class HomeAppBar extends StatelessWidget {
         width: 1.0,
       ),
       child: Container(
-        height: 60.0,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        height: 56.0,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         alignment: Alignment.center,
         child: Obx(() {
           final isInsideFolder = controller.currentFolderId.isNotEmpty;
@@ -41,7 +37,7 @@ class HomeAppBar extends StatelessWidget {
                     autofocus: true,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                     cursorColor: Colors.white,
@@ -49,7 +45,7 @@ class HomeAppBar extends StatelessWidget {
                       hintText: 'Search books, folders...',
                       hintStyle: TextStyle(
                         color: Colors.white38,
-                        fontSize: 14,
+                        fontSize: 13,
                       ),
                       border: InputBorder.none,
                       isDense: true,
@@ -79,18 +75,18 @@ class HomeAppBar extends StatelessWidget {
             children: [
               if (isInsideFolder) ...[
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
                   tooltip: 'Back',
                   padding: const EdgeInsets.all(4),
                   constraints: const BoxConstraints(),
                   onPressed: () => controller.goBack(),
                 ),
-                const SizedBox(width: 8),
-                const Icon(Icons.folder_open_rounded, color: Colors.amberAccent, size: 20),
+                const SizedBox(width: 6),
+                const Icon(Icons.folder_open_rounded, color: Colors.amberAccent, size: 18),
                 const SizedBox(width: 6),
               ] else ...[
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.white.withValues(alpha: 0.1),
@@ -98,17 +94,17 @@ class HomeAppBar extends StatelessWidget {
                   child: const Icon(
                     Icons.auto_stories_rounded,
                     color: Colors.white,
-                    size: 18,
+                    size: 16,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
               ],
               Expanded(
                 child: Text(
                   title,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 17,
+                    fontSize: 16,
                     color: Colors.white,
                     letterSpacing: -0.3,
                   ),
@@ -117,18 +113,18 @@ class HomeAppBar extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.search, color: Colors.white, size: 22),
+                icon: const Icon(Icons.search, color: Colors.white, size: 20),
                 tooltip: 'Search',
                 padding: const EdgeInsets.all(6),
                 constraints: const BoxConstraints(),
                 onPressed: () => controller.toggleSearch(),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: Colors.white.withValues(alpha: 0.12),
                     width: 1,
@@ -139,15 +135,15 @@ class HomeAppBar extends StatelessWidget {
                   children: [
                     const Icon(
                       Icons.menu_book_rounded,
-                      size: 13,
+                      size: 12,
                       color: Colors.white70,
                     ),
-                    const SizedBox(width: 5),
+                    const SizedBox(width: 4),
                     Text(
                       '${controller.totalBooksCount.value}',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
