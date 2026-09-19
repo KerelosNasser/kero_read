@@ -1,6 +1,8 @@
 package com.example.kero_read
 
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -43,12 +45,23 @@ class MainActivity : FlutterActivity() {
 
     private fun handleIntent(intent: Intent) {
         val action = intent.action
-        val data = intent.data
+        val uri: Uri? = when (action) {
+            Intent.ACTION_VIEW -> intent.data
+            Intent.ACTION_SEND -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    intent.getParcelableExtra(Intent.EXTRA_STREAM)
+                }
+            }
+            else -> null
+        }
 
-        if (Intent.ACTION_VIEW == action && data != null) {
+        if (uri != null) {
             try {
-                contentResolver.openInputStream(data)?.use { inputStream ->
-                    val originalName = getDisplayName(data)
+                contentResolver.openInputStream(uri)?.use { inputStream ->
+                    val originalName = getDisplayName(uri)
                     var fileName = originalName
                     var file = File(cacheDir, fileName)
                     var counter = 1

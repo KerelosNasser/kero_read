@@ -152,7 +152,7 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
       if (!await file.exists()) {
         Get.snackbar(
           'Error',
-          'PDF file not found.',
+          'PDF file not found on device.',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.redAccent,
           colorText: Colors.white,
@@ -161,16 +161,28 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
       }
 
       final bytes = await file.readAsBytes();
+      String fileName = currentPdf.name.trim();
+      if (!fileName.toLowerCase().endsWith('.pdf')) {
+        fileName = '$fileName.pdf';
+      }
+
       final String? outputFile = await FilePicker.saveFile(
         dialogTitle: 'Save PDF As:',
-        fileName: currentPdf.name,
+        fileName: fileName,
         type: FileType.custom,
         allowedExtensions: ['pdf'],
+        bytes: bytes,
       );
 
       if (outputFile != null) {
-        final newFile = File(outputFile);
-        await newFile.writeAsBytes(bytes);
+        // On desktop platforms, write bytes manually if the file was not created
+        if (!Platform.isAndroid && !Platform.isIOS) {
+          final newFile = File(outputFile);
+          if (!await newFile.exists() || (await newFile.length()) == 0) {
+            await newFile.writeAsBytes(bytes);
+          }
+        }
+
         Get.snackbar(
           'Success',
           'PDF saved successfully.',

@@ -201,10 +201,10 @@ class ReaderAppBar extends StatelessWidget {
           value: 'save',
           child: Row(
             children: [
-              Icon(Icons.save, size: 18, color: Colors.white70),
+              Icon(Icons.download_rounded, size: 18, color: Colors.white70),
               SizedBox(width: 8),
               Text(
-                "Save PDF As",
+                "Download / Save PDF",
                 style: TextStyle(color: Colors.white, fontSize: 13),
               ),
             ],
