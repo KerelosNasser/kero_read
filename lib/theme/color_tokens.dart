@@ -19,12 +19,18 @@ class AppColors {
   static const Color accentDark = Color(0xFFE4A94B);
   static const Color onAccent = Color(0xFF1A1A18);
 
-  /// Home background gradient (amber -> warm neutral).
+  /// Home background gradient (Deep Midnight slate -> rich obsidian).
   static const LinearGradient homeGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFFC98A2D), Color(0xFF5A4630), Color(0xFF191816)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Color(0xFF0D0F18),
+      Color(0xFF131622),
+      Color(0xFF090A10),
+    ],
   );
+
+  static const Color midnightAura = Color(0xFF3B82F6);
 }
 
 /// Theme extension for non-ColorScheme chrome (glass surfaces, muted ink).

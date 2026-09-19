@@ -12,11 +12,14 @@ import '../views/reader_view.dart';
 import 'dart:io';
 import 'dart:isolate';
 
+enum HomeFilter { all, inProgress, folders, device }
+
 class HomeController extends GetxController {
   static const _intentChannel = MethodChannel('kero_read/intent');
 
   final StorageService _storage = Get.find<StorageService>();
   late TextEditingController folderNameController;
+  late TextEditingController searchController;
 
   var folders = <FolderModel>[].obs;
   var pdfs = <PdfModel>[].obs;
@@ -25,6 +28,12 @@ class HomeController extends GetxController {
   var isScanningDevice = false.obs;
   var totalBooksCount = 0.obs;
 
+  // Bento Dashboard state
+  var selectedFilter = HomeFilter.all.obs;
+  var isGridView = true.obs;
+  var searchQuery = ''.obs;
+  var isSearchOpen = false.obs;
+
   // In-memory index grouping PDFs by folder for O(1) reads
   final Map<String, List<PdfModel>> _pdfsByFolder = {};
 
@@ -32,6 +41,7 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     folderNameController = TextEditingController();
+    searchController = TextEditingController();
     loadData();
     setupIntentListener();
     scanDevicePdfs();
@@ -206,7 +216,70 @@ class HomeController extends GetxController {
     // Clear method channel handler to avoid leaks when controller is disposed
     _intentChannel.setMethodCallHandler(null);
     folderNameController.dispose();
+    searchController.dispose();
     super.onClose();
+  }
+
+  // Bento Dashboard helpers & getters
+  void toggleViewMode() => isGridView.toggle();
+
+  void toggleSearch() {
+    isSearchOpen.toggle();
+    if (!isSearchOpen.value) {
+      searchQuery.value = '';
+      searchController.clear();
+    }
+  }
+
+  void setFilter(HomeFilter filter) => selectedFilter.value = filter;
+
+  void setSearchQuery(String q) => searchQuery.value = q;
+
+  PdfModel? get continueReadingPdf {
+    final list = _storage.pdfBox.values.toList();
+    if (list.isEmpty) return null;
+    list.sort((a, b) => b.timeAdded.compareTo(a.timeAdded));
+    final inProgress = list.where((p) => p.lastReadPage > 1).toList();
+    return inProgress.isNotEmpty ? inProgress.first : list.first;
+  }
+
+  List<FolderModel> get filteredFolders {
+    if (currentFolderId.isNotEmpty) return [];
+    if (selectedFilter.value == HomeFilter.device || selectedFilter.value == HomeFilter.inProgress) {
+      return [];
+    }
+    final q = searchQuery.value.trim().toLowerCase();
+    if (q.isEmpty) return folders;
+    return folders.where((f) => f.name.toLowerCase().contains(q)).toList();
+  }
+
+  List<PdfModel> get filteredPdfs {
+    if (currentFolderId.isEmpty &&
+        (selectedFilter.value == HomeFilter.folders || selectedFilter.value == HomeFilter.device)) {
+      return [];
+    }
+    var list = pdfs.toList();
+    if (selectedFilter.value == HomeFilter.inProgress) {
+      list = list.where((p) => p.lastReadPage > 1).toList();
+    }
+    final q = searchQuery.value.trim().toLowerCase();
+    if (q.isNotEmpty) {
+      list = list.where((p) => p.name.toLowerCase().contains(q)).toList();
+    }
+    return list;
+  }
+
+  List<File> get filteredDevicePdfs {
+    if (currentFolderId.isNotEmpty) return [];
+    if (selectedFilter.value == HomeFilter.folders || selectedFilter.value == HomeFilter.inProgress) {
+      return [];
+    }
+    var list = devicePdfs.toList();
+    final q = searchQuery.value.trim().toLowerCase();
+    if (q.isNotEmpty) {
+      list = list.where((f) => f.path.split('/').last.toLowerCase().contains(q)).toList();
+    }
+    return list;
   }
 
   void loadData() {
